@@ -81,7 +81,7 @@ export default function RegisterComponent() {
                         <FormItem> 
                             <FormLabel />
                             <FormControl>
-                                <Input {...field}  placeholder="BoB" type="username"/>
+                                <Input {...field}  placeholder="username" type="username"/>
                             </FormControl>
                             <FormDescription />
                             <FormMessage />
