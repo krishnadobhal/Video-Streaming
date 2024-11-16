@@ -6,7 +6,7 @@ import {
     integer,
     boolean,
     pgEnum,
-    unique,
+    varchar ,
     PgTable,
     serial,
     real,
@@ -101,3 +101,13 @@ import {
       compoundKey: primaryKey({ columns: [vt.id, vt.token] }),
     })
   )
+  export const videoData = pgTable("video_data", {
+    id:  text("id")
+      .notNull()
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    title: varchar("title", { length: 255 }).notNull(), 
+    description: text("description"), 
+    author: varchar("author", { length: 255 }).notNull(), 
+    url: varchar("url", { length: 2083 }).notNull(),
+  });

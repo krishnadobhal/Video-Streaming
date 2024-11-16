@@ -18,6 +18,9 @@ export const emailSigin = action(loginSchema, async ({ email, password, code }) 
         const existingUser = await db.query.users.findFirst({
             where: eq(users.email, email)
         })
+        if (!existingUser) {
+            return { error: "Email not found" }
+        }
 
         if (existingUser?.email !== email) {
             return { error: "Email not found" }
