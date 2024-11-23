@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,10 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model VideoData {
-id          Int    @id @default(autoincrement())
-title       String
-description String?
-author      String
-url         String
+enum Role {
+  user
+  admin
+}
+
+model user {
+  id                String    @id @default(cuid())
+  name              String?
+  email             String    @unique
+  emailVerified     DateTime?
+  image             String?
+  password          String?
+  twoFactorEnabled  Boolean   @default(false)
+  role              Role      @default(user)
+  customerID        String?
+  accounts          account[]
+  twoFactorTokens   two_factor_tokens[]
+}
+
+model account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model email_tokens {
+  id      String   @id @default(cuid())
+  token   String
+  expires DateTime
+  email   String
+
+  @@unique([id, token])
+}
+
+model password_reset_tokens {
+  id      String   @id @default(cuid())
+  token   String
+  expires DateTime
+  email   String
+
+  @@unique([id, token])
+}
+
+model two_factor_tokens {
+  id      String   @id @default(cuid())
+  token   String
+  expires DateTime
+  email   String
+  userID  String
+  user    user     @relation(fields: [userID], references: [id], onDelete: Cascade)
+
+  @@unique([id, token])
+}
+
+model video_data {
+  id          String  @id @default(cuid())
+  title       String  @db.VarChar(255)
+  description String?
+  author      String  @db.VarChar(255)
+  url         String  @db.VarChar(2083)
 }
