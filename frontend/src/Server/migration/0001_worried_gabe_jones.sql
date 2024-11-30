@@ -1,1 +1,0 @@
-ALTER TABLE "posts" ADD COLUMN "title" serial PRIMARY KEY NOT NULL;
