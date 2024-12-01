@@ -4,7 +4,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
@@ -31,7 +30,6 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAction } from "next-safe-action/hooks"
 import { settings } from "@/Server/actions/setting"
-import Nav from "@/components/navigation/nav"
 
 type SettingsForm = {
     session: Session
@@ -40,7 +38,6 @@ type SettingsForm = {
 export default function SettingsCard(session: SettingsForm) {
     const [error, setError] = useState<string | undefined>()
     const [success, setSuccess] = useState<string | undefined>()
-    const [avatarUploading, setAvatarUploading] = useState(false)
     console.log(session.session.user)
     const form = useForm<z.infer<typeof SettingsSchema>>({
         resolver: zodResolver(SettingsSchema),
@@ -59,7 +56,7 @@ export default function SettingsCard(session: SettingsForm) {
             if (data?.success) setSuccess(data.success)
             if (data?.error) setError(data.error)
         },
-        onError: (error) => {
+        onError: () => {
             setError("Something went wrong")
         },
     })
@@ -203,7 +200,7 @@ export default function SettingsCard(session: SettingsForm) {
                             <FormSuccess message={success} />
                             <Button
                                 type="submit"
-                                disabled={status === "executing" || avatarUploading}
+                                disabled={status === "executing"}
                             >
                                 Update your settings
                             </Button>
