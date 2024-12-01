@@ -5,7 +5,12 @@ import ffmpeg from "fluent-ffmpeg"
 import * as binary from "@ffmpeg-installer/ffmpeg"
 import { v4 as uuidv4 } from 'uuid';
 import fs from "fs"
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 ffmpeg.setFfmpegPath(binary.path)
+console.log(binary.path);
+
 
 
 dotenv.config();
@@ -23,7 +28,12 @@ const hlsFolder = 'hls/output';
 
 
 const s3ToS3 = async (paramkey) => {
-    const mp4FileName = paramkey;
+    console.log(paramkey)
+    const mp4FileName = paramkey.title;
+    const author = paramkey.author;
+    const url = paramkey.url;
+    const filename = mp4FileName;
+    const id = paramkey.id;
     console.log('Starting script');
     console.time('req_time');
     try {
@@ -135,6 +145,10 @@ const s3ToS3 = async (paramkey) => {
 
         const files = fs.readdirSync(hlsFolder);
         const randomid=uuidv4()
+        console.log("author->",author);
+        console.log("file->",filename);
+        
+        
         for (const file of files) {
             if (!file.startsWith(mp4FileName.replace('.', '_'))) {
                 continue;
@@ -143,7 +157,7 @@ const s3ToS3 = async (paramkey) => {
             const fileStream = fs.createReadStream(filePath);
             const uploadParams = {
                 Bucket: bucketName,
-                Key: `${hlsFolder}/${randomid}/${file}`,
+                Key: `${hlsFolder}/${author}/${filename}/${file}`,
                 Body: fileStream,
                 ContentType: file.endsWith('.ts')
                     ? 'video/mp2t'
@@ -154,12 +168,21 @@ const s3ToS3 = async (paramkey) => {
             await s3.upload(uploadParams).promise();
             fs.unlinkSync(filePath);
         }
+        
         console.log(
             `Uploaded media m3u8 playlists and ts segments to s3. Also deleted locally`
         );
 
 
         console.log('Success. Time taken: ');
+        await prisma.video_data.update({
+            where:{
+                id:id
+            },
+            data:{
+                master:`${hlsFolder}/${author}/${filename}/${filename}_master.m3u8`
+            }
+        })
         console.timeEnd('req_time');
     } catch (error) {
         console.error('Error:', error);

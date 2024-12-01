@@ -19,7 +19,7 @@ kafkaconfig.consume("youtube", async (message) => {
             isSystemFree = false; 
             kafkaconfig.consumer.pause([{ topic: "youtube" }]);
 
-            await s3ToS3(value.title);
+            await s3ToS3(value);
 
             console.log("Finished processing:", value.title);
             isSystemFree = true; 
