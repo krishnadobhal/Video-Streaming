@@ -2,11 +2,10 @@
 import { SettingsSchema } from "@/types/settings-schema"
 import { createSafeActionClient } from "next-safe-action"
 import { auth } from "../auth"
-import { db } from ".."
-import { eq } from "drizzle-orm"
-import { users } from "../schema"
 import bcrypt from "bcrypt"
 import { revalidatePath } from "next/cache"
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
 const action = createSafeActionClient()
 
@@ -16,9 +15,12 @@ export const settings = action(SettingsSchema, async (values) => {
     if(!user){
         return {error:"user not exist"}
     }
-    const dbUser=await db.query.users.findFirst({
-        where:eq(users.id,user.user.id)
-    })
+    const dbUser = await prisma.user.findFirst({
+        where: {
+          id: user.user.id,
+        },
+      });
+      
     if (!dbUser) {
         return { error: "User not found" }
     }
@@ -44,16 +46,19 @@ export const settings = action(SettingsSchema, async (values) => {
         values.password = hashedPassword
         values.newPassword = undefined
     }
-    const updatedUser = await db
-    .update(users)
-    .set({
-        twoFactorEnabled: values.isTwoFactorEnabled,
-        name: values.name,
-        email: values.email,
-        password: values.password,
-        image: values.image,
-    })
-    .where(eq(users.id, dbUser.id))
+    const updatedUser = await prisma.user.update({
+        where: {
+          id: dbUser.id,
+        },
+        data: {
+          twoFactorEnabled: values.isTwoFactorEnabled,
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          image: values.image,
+        },
+      });
+      
     revalidatePath("/dashboard/settings")
     return { success: "Settings updated" }
 })

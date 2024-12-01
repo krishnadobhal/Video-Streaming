@@ -1,9 +1,8 @@
 "use server"
 import { loginSchema } from "@/types/LoginSchema"
 import { createSafeActionClient } from "next-safe-action"
-import { db } from ".."
-import { eq } from "drizzle-orm"
-import { twoFactorTokens, users } from "../schema"
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 import { generateEmailVerificationToken, generateTwoFactorToken, getTwoFactorTokenByEmail } from "./token"
 import { sendTwoFactorTokenByEmail, sendVerificationEmail } from "./email"
 import { signIn } from "../auth"
@@ -15,8 +14,10 @@ export const emailSigin = action(loginSchema, async ({ email, password, code }) 
     try {
         console.log(email);
 
-        const existingUser = await db.query.users.findFirst({
-            where: eq(users.email, email)
+        const existingUser=await prisma.user.findFirst({
+            where:{
+                email:email
+            }
         })
         if (!existingUser) {
             return { error: "Email not found" }
@@ -28,7 +29,7 @@ export const emailSigin = action(loginSchema, async ({ email, password, code }) 
 
         if (!existingUser?.emailVerified) {
             const verificationToken = await generateEmailVerificationToken(email)
-            await sendVerificationEmail(email, verificationToken[0].token)
+            await sendVerificationEmail(email, verificationToken.token)
             return { success: "Comfirmation Email sent" }
         }
 
@@ -47,9 +48,12 @@ export const emailSigin = action(loginSchema, async ({ email, password, code }) 
                 if (hasExpired) {
                     return { error: "Token has expired" }
                 }
-                await db
-                    .delete(twoFactorTokens)
-                    .where(eq(twoFactorTokens.id, twoFactorToken.id))
+                await prisma.two_factor_tokens.delete({
+                    where:{
+                        id:twoFactorToken.id
+                    }
+                })
+                
             } else {
                 const token = await generateTwoFactorToken(existingUser.email)
 
@@ -57,7 +61,7 @@ export const emailSigin = action(loginSchema, async ({ email, password, code }) 
                     return { error: "Token not generated!" }
                 }
 
-                await sendTwoFactorTokenByEmail(token[0].email, token[0].token)
+                await sendTwoFactorTokenByEmail(token.email, token.token)
                 return { twoFactor: "Two Factor Token Sent!" }
             }
         }

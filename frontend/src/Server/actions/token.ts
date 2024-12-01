@@ -1,16 +1,19 @@
 "use server"
 
-import { eq } from "drizzle-orm"
-import { db } from ".."
 import crypto from "crypto"
-import { emailTokens, passwordResetTokens, twoFactorTokens, users } from "../schema"
+import { email_tokens, password_reset_tokens, two_factor_tokens, users } from "../schema"
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
 
 export const getVerificationTokenByEmail = async (email: string) => {
     try {
-        const verificationToken = await db.query.emailTokens.findFirst({
-            where: eq(emailTokens.email, email),
-        })
+        const verificationToken = await prisma.email_tokens.findFirst({
+            where: {
+              email: email,
+            },
+          });
+          
         return verificationToken
     } catch (error) {
         return null
@@ -18,25 +21,17 @@ export const getVerificationTokenByEmail = async (email: string) => {
 }
 export const getVerificationTokenByToken = async (token: string) => { 
     try {
-        const verificationToken = await db.query.emailTokens.findFirst({
-            where: eq(emailTokens.token, token), // Search by token instead of email
-        });
+        const verificationToken = await prisma.email_tokens.findFirst({
+            where: {
+              token: token,
+            },
+          });
+          
         return verificationToken;
     } catch (error) {
         return null;
     }
 };
-
-export const getPasswordTokenByToken=async(token:string)=>{
-    try {
-        const passwordToken=await db.query.passwordResetTokens.findFirst({
-            where:eq(passwordResetTokens.token,token)
-        })
-        return passwordToken
-    } catch (error) {
-        return null
-    }
-}
 
 export const generateEmailVerificationToken=async(email:string)=>{
     const token=crypto.randomUUID()
@@ -44,16 +39,21 @@ export const generateEmailVerificationToken=async(email:string)=>{
     const existingToken=await getVerificationTokenByEmail(email);
 
     if(existingToken){
-        await db.delete(emailTokens).where(eq(emailTokens.id, existingToken.id))
+        await prisma.email_tokens.delete({
+            where: {
+              id: existingToken.id,
+            },
+          });
+          
     }
-    const verificationToken = await db
-        .insert(emailTokens)
-        .values({
-            email,
-            token,
-            expires,
-        })
-    .returning()
+    const verificationToken = await prisma.email_tokens.create({
+        data: {
+          email: email,
+          token: token,
+          expires: expires
+        },
+      });
+      
   return verificationToken
 }
 
@@ -66,29 +66,43 @@ export const emailVerification=async(token:string)=>{
 
     if (hasExpired) return { error: "Token has expired" }
 
-    const existingUser = await db.query.users.findFirst({
-    where: eq(users.email, existingToken.email),
-    })
+    const existingUser = await prisma.user.findFirst({
+        where: {
+          email: existingToken.email,
+        },
+      });
+      
     if (!existingUser) return { error: "Email does not exist" }
 
-    await db
-    .update(users)
-    .set({
-        emailVerified: new Date(),
-        email: existingToken.email,
-    })
-    .where(eq(users.id, existingUser.id))
+    await prisma.user.update({
+        where: {
+          id: existingUser.id,
+        },
+        data: {
+          emailVerified: new Date(),
+          email: existingToken.email,
+        },
+      });
+      
 
-    await db.delete(emailTokens).where(eq(emailTokens.id, existingToken.id))
+      await prisma.email_tokens.delete({
+        where: {
+          id: existingToken.id,
+        },
+      });
+      
     return { success: "Email Verified" }
 }
 
 export const getpasswordTokenByToken=async(token:string)=>{
     try {
-        const paaswordResetToken=await db.query.passwordResetTokens.findFirst({
-            where:eq(passwordResetTokens.token,token)
-        })
-        return paaswordResetToken
+        const passwordResetToken = await prisma.password_reset_tokens.findFirst({
+            where: {
+              token: token,
+            },
+          });
+          
+        return passwordResetToken
     } catch (error) {
         console.log(error);
         return null
@@ -102,13 +116,21 @@ export const generatePasswordResetToken=async(email:string)=>{
         const expires=new Date(new Date().getTime() + 3600*1000)
         const existingToken=await getpasswordTokenByToken(token)
         if(existingToken){
-            await db.delete(passwordResetTokens).where(eq(passwordResetTokens.id,existingToken.id))
+            await prisma.password_reset_tokens.delete({
+                where: {
+                  id: existingToken.id,
+                },
+              });
+              
         } 
-        const passwordResetToken=await db.insert(passwordResetTokens).values({
-            email,
-            token,
-            expires
-        }).returning()
+        const passwordResetToken = await prisma.password_reset_tokens.create({
+            data: {
+              email: email,
+              token: token,
+              expires: expires,
+            },
+          });
+          
         return passwordResetToken
 
     } catch (error) {
@@ -120,9 +142,12 @@ export const generatePasswordResetToken=async(email:string)=>{
 
 export const getTwoFactorTokenByEmail=async(email:string)=>{
     try {
-        const twoFactor=db.query.twoFactorTokens.findFirst({
-            where:eq(twoFactorTokens.email,email)
-        })
+        const twoFactor = await prisma.two_factor_tokens.findFirst({
+            where: {
+              email: email,
+            },
+          });
+          
         return twoFactor
     } catch (error) {
         console.log(error);
@@ -138,18 +163,23 @@ export const generateTwoFactorToken = async (email: string) => {
 
         const existingToken = await getTwoFactorTokenByEmail(email)
         if (existingToken) {
-        await db
-            .delete(twoFactorTokens)
-            .where(eq(twoFactorTokens.id, existingToken.id))
+            const twoFactorToken = await prisma.two_factor_tokens.create({
+                data: {
+                  email: email,
+                  token: token,
+                  expires: expires,
+                },
+              });
+              
         }
-        const twoFactorToken = await db
-            .insert(twoFactorTokens)
-            .values({
-                email,
-                token,
-                expires,
-            })
-        .returning()
+        const twoFactorToken = await prisma.two_factor_tokens.create({
+            data: {
+                email: email,
+                token: token,
+                expires: expires,
+            },
+        });
+        
         return twoFactorToken
     } catch (e) {
         return null
