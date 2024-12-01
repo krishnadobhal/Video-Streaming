@@ -1,5 +1,7 @@
 import {pushVideoForEncodingToKafka} from "./kafkapublisher.controller.js"
 import AWS from 'aws-sdk';
+import { S3Client,PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import * as dotenv from "dotenv"
 import {addVideoDetailsToDB} from "../db/db.js"
 dotenv.config()
@@ -69,7 +71,7 @@ export const uploadChunk = async (req, res) => {
 export const completeUpload = async (req, res) => {
     try {
         console.log("Completing Upload");
-        const { filename, totalChunks, uploadId, title, description, author } = req.body;
+        const { filename, totalChunks, uploadId, title, description, author,id } = req.body;
         const uploadedParts = [];
 
         // Build uploadedParts array from request body
@@ -109,11 +111,42 @@ export const completeUpload = async (req, res) => {
 
         console.log("data----- ", uploadResult);
         const url = uploadResult.Location;
-        await addVideoDetailsToDB(title, description, author, url); 
-        pushVideoForEncodingToKafka(title, uploadResult.Location);
+        const videodetails=await addVideoDetailsToDB(title, description, author, url); 
+        console.log(videodetails.id);
+        
+        pushVideoForEncodingToKafka(title,author,videodetails.id, uploadResult.Location);
         return res.status(200).json({ message: "Uploaded successfully!!!" });
     } catch (error) {
         console.log("Error completing upload :", error);
         return res.status(500).send("Upload completion failed");
     }
 };
+
+
+export const thumbnailupload=async(req,res)=>{
+    const imageType=req.imageType
+    const allowedImageTypes = [
+        "image/jpg",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    ];
+    if (!allowedImageTypes.includes(imageType)) {
+        return res.status(400).json({ error: "Unsupported Image Type" });
+    }
+
+    const putObjectCommand = new PutObjectCommand({
+        Bucket: "twitter-krishna",
+        ContentType: imageType,
+        Key: `uploads/${ctx.user.id}/tweets/${imageName}-${ctx.user.createdAt}`,
+    });
+    const s3 = new S3Client({
+        credentials: {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        },
+        region: "ap-south-1",
+    });
+    const signedURL = await getSignedUrl(s3, putObjectCommand);
+    res.send(json({url:signedURL}))
+}

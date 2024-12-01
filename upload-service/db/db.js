@@ -9,6 +9,7 @@ export async function addVideoDetailsToDB(title, description, author, url) {
          author: author,
          url: url
      } })
+     return videoData
     console.log(videoData);
    }
    
