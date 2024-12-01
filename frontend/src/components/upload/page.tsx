@@ -1,8 +1,10 @@
 "use client";
 import React, { useState } from "react";
 import axios from "axios";
+import { useSession } from "next-auth/react"
 
 const UploadForm = () => {
+    const session=useSession()
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [author, setAuthor] = useState("");
@@ -87,6 +89,7 @@ const UploadForm = () => {
                         title: title,
                         description: description,
                         author: author,
+                        id:session.data?.user.id
                     }
                 );
 

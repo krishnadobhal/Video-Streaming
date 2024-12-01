@@ -1,10 +1,39 @@
 "use client"
 import VideoPlayer from './videoplayer'
-import { useRef } from 'react'
+import { useRef,useState, useEffect } from 'react'
+import {useSearchParams} from "next/navigation"
+import axios from 'axios'
 
 const Fullplayer=() =>{
+    
+    // const session=useSession()
+    const id=useSearchParams().get("v")
+    // const filename=useSearchParams().get("file")
+    // const key="hls/output/11d7d5df-10b6-4a60-859a-d7dfd1503613/testing_master.m3u8"
+    // const key=`hls/output/${author}/${filename}/${filename}_master.m3u8`
+    // `${hlsFolder}/${author}/${file}
     const playerRef = useRef(null)
-    const videoLink = "https://yt-krishna.s3.ap-south-1.amazonaws.com/hls/output/3f5a5216-b06c-43ec-a9a9-e1c196368503/test3_master.m3u8"
+    const [video,setvideo]=useState()
+    // const videoLink = link
+    useEffect(() => {
+        // Fetch video data
+        const fetchVideo = async () => {
+            const res = await axios.get("http://localhost:8082/watch", {
+                params: { key: id },
+            });
+            setvideo(res.data.signedUrl);
+            console.log(res.data.signedUrl)
+        };
+        fetchVideo();
+
+        // Clean up video.js player on unmount
+        return () => {
+            if (playerRef.current) {
+                playerRef.current.dispose(); // Properly dispose of the player
+                playerRef.current = null;
+            }
+        };
+    }, []);
 
     const videoPlayerOptions = {
         controls: true,
@@ -12,7 +41,7 @@ const Fullplayer=() =>{
         fluid: true,
         sources: [
             {
-                src: videoLink,
+                src: video,
                 type: "application/x-mpegURL"
             }
         ]
