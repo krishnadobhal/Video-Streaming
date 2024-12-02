@@ -11,7 +11,7 @@ export default function Home() {
     <div>
       <SessionProvider >
       {/* <Fullplayer /> */}
-      <UploadForm/>
+      <AllVideo/>
       </SessionProvider >
       {/* <AllVideo/> */}
     </div>

@@ -111,6 +111,9 @@ const UploadForm = () => {
         if(!title){
             console.error("No title");
         }
+        console.log("title",title);
+        console.log("author",session.data?.user.name);
+        
 
         return async (event: Event) => {
 
@@ -147,7 +150,7 @@ const UploadForm = () => {
             // }
 
         }
-    }, [])
+    }, [title,session])
 
     const handleSelectImage = useCallback(() => {
         const input = document.createElement("input");

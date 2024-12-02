@@ -127,7 +127,7 @@ export const thumbnailupload=async(req,res)=>{
     const { author, title, imageType } = req.body;
     console.log(title);
     
-    const imageLocation=`hls/output/${author}/${title}/thumbail`
+    const imageLocation=`hls/output/${author}/${title}/thumbnail`
     // const imageType=req.query.imageType
     const allowedImageTypes = [
         "image/jpg",
