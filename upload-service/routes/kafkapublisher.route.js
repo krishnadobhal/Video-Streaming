@@ -1,5 +1,5 @@
 import express from "express"
-import { initializeUpload, uploadChunk, completeUpload } from "../controller/multipartupload.controller.js.js";
+import { initializeUpload, uploadChunk, completeUpload,thumbnailupload } from "../controller/multipartupload.controller.js.js";
 
 import multer from 'multer';
 const upload = multer();
@@ -18,5 +18,6 @@ router.post('/', upload.single('chunk'), uploadChunk);
 
 // Route for completing the upload
 router.post('/complete', completeUpload);
+router.post("/thumbnail",thumbnailupload)
 
 export default router;

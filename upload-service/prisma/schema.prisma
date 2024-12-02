@@ -76,4 +76,5 @@ model video_data {
   author      String  @db.VarChar(255)
   url         String  @db.VarChar(2083)
   master      String?  @db.VarChar(2083)
+  thumbnail   String? @db.VarChar(2083)
 }

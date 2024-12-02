@@ -124,7 +124,11 @@ export const completeUpload = async (req, res) => {
 
 
 export const thumbnailupload=async(req,res)=>{
-    const imageType=req.imageType
+    const { author, title, imageType } = req.body;
+    console.log(title);
+    
+    const imageLocation=`hls/output/${author}/${title}/thumbail`
+    // const imageType=req.query.imageType
     const allowedImageTypes = [
         "image/jpg",
         "image/jpeg",
@@ -136,9 +140,9 @@ export const thumbnailupload=async(req,res)=>{
     }
 
     const putObjectCommand = new PutObjectCommand({
-        Bucket: "twitter-krishna",
+        Bucket: "yt-krishna",
         ContentType: imageType,
-        Key: `uploads/${ctx.user.id}/tweets/${imageName}-${ctx.user.createdAt}`,
+        Key: imageLocation,
     });
     const s3 = new S3Client({
         credentials: {
@@ -148,5 +152,5 @@ export const thumbnailupload=async(req,res)=>{
         region: "ap-south-1",
     });
     const signedURL = await getSignedUrl(s3, putObjectCommand);
-    res.send(json({url:signedURL}))
+    res.json({ url: signedURL });
 }

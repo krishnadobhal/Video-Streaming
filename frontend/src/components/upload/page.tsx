@@ -1,16 +1,20 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react"
+import { NextURL } from "next/dist/server/web/next-url";
+import { Image } from "lucide-react";
 
 const UploadForm = () => {
-    const session=useSession()
+    const session = useSession()
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [author, setAuthor] = useState("");
+    // const [author, setAuthor] = useState("");
     const [selectedFile, setSelectedFile] = useState<File>();
+    const [ImageURL, setImageURL] = useState("")
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadCompleted, setuploadCompleted] = useState(false);
+    
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -21,7 +25,7 @@ const UploadForm = () => {
 
     const handleUpload = async () => {
         setuploadCompleted(false)
-        if (!title || !author) {
+        if (!title ) {
             alert("Title and Author are required fields.");
             return;
         }
@@ -68,8 +72,8 @@ const UploadForm = () => {
                                 const loaded = progressEvent.loaded || 0;
                                 const total = progressEvent.total || selectedFile.size;
                                 const percentCompleted = Math.round(
-                                    (chunkIndex + loaded / total) / 
-                                    totalChunks * 
+                                    (chunkIndex + loaded / total) /
+                                    totalChunks *
                                     100
                                 );
                                 setUploadProgress(Math.min(percentCompleted, 100));
@@ -88,8 +92,8 @@ const UploadForm = () => {
                         uploadId: uploadId,
                         title: title,
                         description: description,
-                        author: author,
-                        id:session.data?.user.id
+                        author: session.data?.user.name,
+                        id: session.data?.user.id
                     }
                 );
 
@@ -103,6 +107,59 @@ const UploadForm = () => {
         }
     };
 
+    const handlerInputChangeFile = useCallback((input: HTMLInputElement) => {
+        if(!title){
+            console.error("No title");
+        }
+
+        return async (event: Event) => {
+
+            event?.preventDefault();
+
+            const file: File | null | undefined = input.files?.item(0);
+            if (!file) return;
+            console.log(file);
+
+            
+            const res = await axios.post("http://localhost:8080/upload/thumbnail",{
+                author: session.data?.user.name,
+                title: title,
+                imageType: file.type
+            })
+            // const res = await axios.get("http://localhost:8082/watch", {
+            //     params: { key: id },
+            // });
+
+            console.log(res.data)
+
+            // if (res.data) {
+
+                await axios.put(res.data.url, file, {
+                    headers: {
+                        "Content-Type": file.type,
+                    },
+                });
+
+
+            //     const url = new NextURL(getSignedUrlForTweet);
+            //     const myfilepath = `${url.origin}${url.pathname}`
+            //     setImageURL(myfilepath)
+            // }
+
+        }
+    }, [])
+
+    const handleSelectImage = useCallback(() => {
+        const input = document.createElement("input");
+        input.setAttribute("type", "file");
+        input.setAttribute("accept", "image/*");
+
+        const handlerFn = handlerInputChangeFile(input);
+
+        input.addEventListener("change", handlerFn)
+
+        input.click();
+    }, [handlerInputChangeFile]);
     return (
         <div className="container mx-auto max-w-lg p-10">
             <form encType="multipart/form-data">
@@ -127,17 +184,7 @@ const UploadForm = () => {
                         className="px-3 py-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
                     />
                 </div>
-                <div className="mb-4">
-                    <input
-                        type="text"
-                        name="author"
-                        placeholder="Author"
-                        value={author}
-                        onChange={(e) => setAuthor(e.target.value)}
-                        required
-                        className="px-3 py-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
-                    />
-                </div>
+                
                 <div className="mb-4">
                     <input
                         type="file"
@@ -146,13 +193,13 @@ const UploadForm = () => {
                         className="px-3 py-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
                     />
                 </div>
-                {!uploadCompleted ? (<div>{uploadProgress}%</div>):(<div>Completed</div>)}
+                {!uploadCompleted ? (<div>{uploadProgress}%</div>) : (<div>Completed</div>)}
                 {uploadProgress > 0 && (
                     <div>
-                        
+
                         <div className="mb-4 w-full bg-gray-200 rounded-full h-2.5 flex-col">
-                            <div 
-                                className="bg-blue-600 h-2.5 rounded-full" 
+                            <div
+                                className="bg-blue-600 h-2.5 rounded-full"
                                 style={{ width: `${uploadProgress}%` }}
                             ></div>
                         </div>
@@ -165,6 +212,7 @@ const UploadForm = () => {
                 >
                     Upload
                 </button>
+                <Image onClick={handleSelectImage} className="text-2xl hover:text-blue-300" />
             </form>
         </div>
     );

@@ -13,16 +13,16 @@ enum Role {
 }
 
 model user {
-  id                String    @id @default(cuid())
-  name              String?
-  email             String    @unique
-  emailVerified     DateTime?
-  image             String?
-  password          String?
-  twoFactorEnabled  Boolean   @default(false)
-  role              Role      @default(user)
-  customerID        String?
-  accounts          account[]
+  id               String    @id @default(cuid())
+  name             String?
+  email            String    @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  twoFactorEnabled Boolean   @default(false)
+  role             Role      @default(user)
+  customerID       String?
+  accounts         account[]
 }
 
 model account {
@@ -37,7 +37,7 @@ model account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              user    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -75,5 +75,6 @@ model video_data {
   description String?
   author      String  @db.VarChar(255)
   url         String  @db.VarChar(2083)
-  master      String?  @db.VarChar(2083)
+  master      String? @db.VarChar(2083)
+  thumbnail   String? @db.VarChar(2083)
 }
