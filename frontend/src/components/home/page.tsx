@@ -10,11 +10,11 @@ export default async function AllVideo(){
 
     // console.log(datas)
     return (
-        <div>
-            Hello
-            <div>
+        <div className="pt-12 pl-10">
+            Youtube
+            <div className="grid grid-cols-12">
             {datas.map(data =>(
-                <div key={data.id}>
+                <div key={data.id} className="col-span-4">
                     {/* <Fullplayer link={data.url} /> */}
                     <Image src={data.thumbnail? data.thumbnail : ""} alt="none" width={300} height={200} />
                     <div className="p-4">

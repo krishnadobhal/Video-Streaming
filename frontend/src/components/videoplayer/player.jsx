@@ -1,74 +1,82 @@
 "use client"
 import VideoPlayer from './videoplayer'
-import { useRef,useState, useEffect } from 'react'
-import {useSearchParams} from "next/navigation"
+import { useRef, useState, useEffect } from 'react'
+import { useSearchParams } from "next/navigation"
 import axios from 'axios'
 
-const Fullplayer=() =>{
-    
-    // const session=useSession()
-    const id=useSearchParams().get("v")
-    // const filename=useSearchParams().get("file")
-    // const key="hls/output/11d7d5df-10b6-4a60-859a-d7dfd1503613/testing_master.m3u8"
-    // const key=`hls/output/${author}/${filename}/${filename}_master.m3u8`
-    // `${hlsFolder}/${author}/${file}
-    const playerRef = useRef(null)
-    const [video,setvideo]=useState()
-    // const videoLink = link
-    useEffect(() => {
-        // Fetch video data
-        const fetchVideo = async () => {
-            const res = await axios.get("http://localhost:8082/watch", {
-                params: { key: id },
-            });
-            setvideo(res.data.signedUrl);
-            console.log(res.data.signedUrl)
-        };
-        fetchVideo();
+const Fullplayer = () => {
+  const id = useSearchParams().get("v")
+  const playerRef = useRef(null)
+  const [video, setVideo] = useState()
+  const [error, setError] = useState(null)
 
-        // Clean up video.js player on unmount
-        return () => {
-            if (playerRef.current) {
-                playerRef.current.dispose(); // Properly dispose of the player
-                playerRef.current = null;
-            }
-        };
-    }, []);
-
-    const videoPlayerOptions = {
-        controls: true,
-        responsive: true,
-        fluid: true,
-        sources: [
-            {
-                src: video,
-                type: "application/x-mpegURL"
-            }
-        ]
-    }
-    const handlePlayerReady = (player) => {
-        playerRef.current = player;
-
-        // You can handle player events here, for example:
-        player.on("waiting", () => {
-            videojs.log("player is waiting");
+  useEffect(() => {
+    const fetchVideo = async () => {
+      try {
+        const res = await axios.get("http://localhost:8082/watch", { 
+          params: { key: id }, 
         });
-
-        player.on("dispose", () => {
-            videojs.log("player will dispose");
-        });
+        
+        if (res.data && res.data.signedUrl) {
+          setVideo(res.data.signedUrl);
+          console.log("Signed URL:", res.data.signedUrl);
+        } else {
+          setError("No video URL found");
+        }
+      } catch (err) {
+        console.error("Error fetching video:", err);
+        setError("Failed to fetch video");
+      }
     };
-    return (
-        <>
-            <div>
-                <h1>hello</h1>
-            </div>
-            <VideoPlayer
-                options={videoPlayerOptions}
-                onReady={handlePlayerReady}
-            />
-        </>
-    )
-}
 
-export default Fullplayer
+    if (id) {
+      fetchVideo();
+    }
+
+    // Cleanup function
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.dispose();
+        playerRef.current = null;
+      }
+    };
+  }, [id]);
+
+  const videoPlayerOptions = {
+    controls: true,
+    responsive: true,
+    fluid: true,
+    sources: video ? [{ 
+      src: video, 
+      type: "application/x-mpegURL" 
+    }] : []
+  };
+
+  const handlePlayerReady = (player) => {
+    playerRef.current = player;
+    
+    // Add event listeners for debugging
+    player.on("error", (error) => {
+      console.error("Video.js player error:", error);
+    });
+  };
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!video) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div>
+      <VideoPlayer 
+        options={videoPlayerOptions} 
+        onReady={handlePlayerReady} 
+      />
+    </div>
+  );
+};
+
+export default Fullplayer;
