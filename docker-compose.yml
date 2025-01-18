@@ -1,0 +1,45 @@
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - 3000:3000
+    environment:
+      - DATABASE_URL=
+      - DRIZZLE_DATABASE_URL=
+      - AUTH_SECRET=
+      - Github_Client=
+      - Github_Secret=
+      - Google_Client=
+      - Google_Secret=
+      - AUTH_TRUST_HOST=
+      - RESEND_API_KEY=
+  transcode-service:
+    build: ./transcode-service
+    ports:
+      - 81:81
+    environment:
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+      - AWS_BUCKET=yt-krishna
+  upload-service:
+    build: ./upload-service
+    ports:
+      - 8080:8080
+    environment:
+      - DATABASE_URL=
+      - BROKER=
+      - AIVEN_PASS=
+      - AIVEN_USERNAME=
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+      - AWS_BUCKET=
+  watch-service:
+    build: ./watch-service
+    ports:
+      - 8082:8082
+    environment:
+      - AWS_ACCESS_KEY_ID=
+      - AWS_SECRET_ACCESS_KEY=
+      - AWS_BUCKET=
+      - DATABASE_URL=
