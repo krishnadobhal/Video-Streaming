@@ -14,8 +14,11 @@ const Click: React.FC<CLickprops> = ({ id }) => {
   };
 
   return (
-    <div onClick={handleClick} className="cursor-pointer text-blue-500">
-      playvideo
+    <div 
+      onClick={handleClick} 
+      className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 ease-in-out cursor-pointer font-medium text-sm shadow-sm hover:shadow-md"
+    >
+      Play Video
     </div>
   );
 };

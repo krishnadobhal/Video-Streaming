@@ -1,9 +1,9 @@
-import {pushVideoForEncodingToKafka} from "./kafkapublisher.controller.js"
+import { pushVideoForEncodingToKafka } from "./kafkapublisher.controller.js"
 import AWS from 'aws-sdk';
-import { S3Client,PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import * as dotenv from "dotenv"
-import {addVideoDetailsToDB} from "../db/db.js"
+import { addVideoDetailsToDB } from "../db/db.js"
 dotenv.config()
 
 export const initializeUpload = async (req, res) => {
@@ -12,12 +12,14 @@ export const initializeUpload = async (req, res) => {
         const { filename } = req.body;
         console.log(filename);
         const s3 = new AWS.S3({
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            region: "ap-south-1",
+            endpoint: process.env.EndPoint,
+            accessKeyId: process.env.ACCESS_KEY_ID || "krishna",
+            secretAccessKey: process.env.SECRET_ACCESS_KEY || "12345678",
+            s3ForcePathStyle: true,
+            signatureVersion: "v4"
         });
         console.log("s3");
-        
+
         const bucketName = process.env.AWS_BUCKET;
 
         const createParams = {
@@ -44,9 +46,11 @@ export const uploadChunk = async (req, res) => {
         console.log("Uploading Chunk");
         const { filename, chunkIndex, uploadId } = req.body;
         const s3 = new AWS.S3({
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            region: "ap-south-1",
+            endpoint: "http://localhost:9000",
+            accessKeyId: "admin",
+            secretAccessKey: "password123",
+            s3ForcePathStyle: true,
+            signatureVersion: "v4"
         });
         const bucketName = process.env.AWS_BUCKET;
 
@@ -71,18 +75,14 @@ export const uploadChunk = async (req, res) => {
 export const completeUpload = async (req, res) => {
     try {
         console.log("Completing Upload");
-        const { filename, totalChunks, uploadId, title, description, author,id } = req.body;
-        const uploadedParts = [];
-
-        // Build uploadedParts array from request body
-        for (let i = 0; i < totalChunks; i++) {
-            uploadedParts.push({ PartNumber: i + 1, ETag: req.body[`part${i + 1}`] });
-        }
+        const { filename, totalChunks, uploadId, title, description, author, id } = req.body;
 
         const s3 = new AWS.S3({
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            region: "ap-south-1",
+            endpoint: "http://localhost:9000",
+            accessKeyId: "admin",
+            secretAccessKey: "password123",
+            s3ForcePathStyle: true,
+            signatureVersion: "v4"
         });
         const bucketName = process.env.AWS_BUCKET;
 
@@ -111,10 +111,10 @@ export const completeUpload = async (req, res) => {
 
         console.log("data----- ", uploadResult);
         const url = uploadResult.Location;
-        const videodetails=await addVideoDetailsToDB(title, description, author, url); 
+        const videodetails = await addVideoDetailsToDB(title, description, author, url);
         console.log(videodetails.id);
-        
-        pushVideoForEncodingToKafka(title,author,videodetails.id, uploadResult.Location);
+
+        pushVideoForEncodingToKafka(title, author, videodetails.id, uploadResult.Location);
         return res.status(200).json({ message: "Uploaded successfully!!!" });
     } catch (error) {
         console.log("Error completing upload :", error);
@@ -123,11 +123,11 @@ export const completeUpload = async (req, res) => {
 };
 
 
-export const thumbnailupload=async(req,res)=>{
+export const thumbnailupload = async (req, res) => {
     const { author, title, imageType } = req.body;
     console.log(title);
-    
-    const imageLocation=`hls/output/${author}/${title}/thumbnail`
+
+    const imageLocation = `hls/output/${author}/${title}/thumbnail`
     // const imageType=req.query.imageType
     const allowedImageTypes = [
         "image/jpg",

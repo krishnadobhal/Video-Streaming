@@ -10,17 +10,10 @@ dotenv.config()
 class KafkaConfig {
     constructor() {
         this.kafka = new Kafka({
-            clientId: "youtube uploader",
-            brokers: [process.env.BROKER],
-            ssl: {
-                ca: [fs.readFileSync(path.resolve("./ca.pem"), "utf-8")]
-            },
-            sasl: {
-                username: process.env.AIVEN_USERNAME,
-                password: process.env.AIVEN_PASS,
-                mechanism: "plain"
-            }
-        })
+            clientId: 'my-app',
+            brokers: ['localhost:9092'],
+        });
+
         this.producer = this.kafka.producer()
         this.consumer = this.kafka.consumer({ groupId: "youtube-uploader" })
     }
@@ -55,7 +48,7 @@ class KafkaConfig {
             console.log(error)
         }
     }
-    
+
     async connectConsumer() {
         await this.consumer.connect();
         console.log("Consumer connected to Kafka");

@@ -8,9 +8,11 @@ const prisma = new PrismaClient()
 async function generateSignedUrl(videoKey) {
 
     const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        region: "ap-south-1"
+        endpoint: process.env.EndPoint,
+        accessKeyId: process.env.ACCESS_KEY_ID || "krishna",
+        secretAccessKey: process.env.SECRET_ACCESS_KEY || "12345678",
+        s3ForcePathStyle: true,
+        signatureVersion: "v4"
     });
 
     const params = {
@@ -33,11 +35,11 @@ async function generateSignedUrl(videoKey) {
 const watchVideo = async (req, res) => {
     try {
         console.log("hello");
-        
+
         const videoKey = req.query.key; // Key of the video file in S3
-        const key=await prisma.video_data.findUnique({
-            where:{
-                id:videoKey
+        const key = await prisma.video_data.findUnique({
+            where: {
+                id: videoKey
             }
         })
         const signedUrl = await generateSignedUrl(key.master);
