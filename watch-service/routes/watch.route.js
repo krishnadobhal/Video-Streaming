@@ -12,9 +12,11 @@ router.get('/stream/:id', watchVideo);
 router.get('/stream/:id/token', getStreamToken);
 
 // master playlist - requires token authentication
+// NOTE: Consider adding rate limiting (e.g., express-rate-limit) for production deployments
 router.get("/stream/:id/master.m3u8", verifyStreamToken, streamMaster);
 
 // variant playlists + segments (.ts, .m3u8) - requires token authentication
+// NOTE: Consider adding rate limiting (e.g., express-rate-limit) for production deployments
 router.get("/stream/:id/:fileName", verifyStreamToken, streamAsset);
 
 export default router;
