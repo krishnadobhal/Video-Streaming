@@ -4,6 +4,7 @@ dotenv.config()
 import { PrismaClient } from '@prisma/client'
 import axios from "axios"
 import path from "path";
+import { generateStreamToken } from "../middleware/auth.middleware.js";
 
 const prisma = new PrismaClient()
 
@@ -149,6 +150,37 @@ export const streamAsset = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).send("Internal Server Error");
         }
+    }
+};
+
+/**
+ * Generate a streaming token for a video.
+ * This endpoint should be called by authenticated users to get a token
+ * that can be used to access streaming endpoints.
+ */
+export const getStreamToken = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Verify the video exists
+        const video = await prisma.video_data.findUnique({
+            where: { id },
+        });
+
+        if (!video) {
+            return res.status(404).json({ error: "Video not found" });
+        }
+
+        // Generate a token with video ID and expiration
+        const token = generateStreamToken({
+            videoId: id,
+            type: "stream"
+        }, "1h"); // Token valid for 1 hour
+
+        res.json({ token });
+    } catch (err) {
+        console.error("Error generating stream token:", err);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
