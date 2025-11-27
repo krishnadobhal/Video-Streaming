@@ -23,10 +23,18 @@ export const VideoPlayer = (props) => {
           vhs: {
             // Override the default xhr function to append token to all requests
             beforeRequest: streamToken ? (opts) => {
-              const url = new URL(opts.uri);
-              if (!url.searchParams.has('token')) {
-                url.searchParams.set('token', streamToken);
-                opts.uri = url.toString();
+              try {
+                // Handle both absolute and relative URLs
+                const baseUrl = window.location.origin;
+                const url = new URL(opts.uri, baseUrl);
+                if (!url.searchParams.has('token')) {
+                  url.searchParams.set('token', streamToken);
+                  opts.uri = url.toString();
+                }
+              } catch {
+                // If URL parsing fails, append token as query string
+                const separator = opts.uri.includes('?') ? '&' : '?';
+                opts.uri = `${opts.uri}${separator}token=${streamToken}`;
               }
               return opts;
             } : undefined

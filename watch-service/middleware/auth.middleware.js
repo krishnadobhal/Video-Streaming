@@ -10,6 +10,7 @@ const JWT_SECRET = process.env.AUTH_SECRET;
  */
 export const verifyStreamToken = (req, res, next) => {
     const token = req.query.token;
+    const requestedVideoId = req.params.id;
 
     if (!token) {
         return res.status(401).json({ error: "Access denied. No token provided." });
@@ -22,6 +23,12 @@ export const verifyStreamToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
+        
+        // Validate that the token's videoId matches the requested video
+        if (decoded.videoId && decoded.videoId !== requestedVideoId) {
+            return res.status(403).json({ error: "Token not valid for this video" });
+        }
+        
         req.user = decoded;
         next();
     } catch (err) {

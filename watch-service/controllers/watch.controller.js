@@ -157,6 +157,10 @@ export const streamAsset = async (req, res) => {
  * Generate a streaming token for a video.
  * This endpoint should be called by authenticated users to get a token
  * that can be used to access streaming endpoints.
+ * 
+ * NOTE: In production, this endpoint should be protected by session-based
+ * authentication from your application (e.g., NextAuth session validation).
+ * The current implementation validates the video exists before issuing a token.
  */
 export const getStreamToken = async (req, res) => {
     try {
