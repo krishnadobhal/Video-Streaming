@@ -47,8 +47,8 @@ export const uploadChunk = async (req, res) => {
         const { filename, chunkIndex, uploadId } = req.body;
         const s3 = new AWS.S3({
             endpoint: "http://localhost:9000",
-            accessKeyId: "admin",
-            secretAccessKey: "password123",
+            accessKeyId: process.env.ACCESS_KEY_ID || "krishna",
+            secretAccessKey: process.env.SECRET_ACCESS_KEY || "12345678",
             s3ForcePathStyle: true,
             signatureVersion: "v4"
         });
@@ -79,8 +79,8 @@ export const completeUpload = async (req, res) => {
 
         const s3 = new AWS.S3({
             endpoint: "http://localhost:9000",
-            accessKeyId: "admin",
-            secretAccessKey: "password123",
+            accessKeyId: process.env.ACCESS_KEY_ID || "krishna",
+            secretAccessKey: process.env.SECRET_ACCESS_KEY || "12345678",
             s3ForcePathStyle: true,
             signatureVersion: "v4"
         });
@@ -146,10 +146,12 @@ export const thumbnailupload = async (req, res) => {
     });
     const s3 = new S3Client({
         credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            endpoint: "http://localhost:9000",
+            accessKeyId: process.env.ACCESS_KEY_ID || "krishna",
+            secretAccessKey: process.env.SECRET_ACCESS_KEY || "12345678",
+            s3ForcePathStyle: true,
+            signatureVersion: "v4"
         },
-        region: "ap-south-1",
     });
     const signedURL = await getSignedUrl(s3, putObjectCommand);
     res.json({ url: signedURL });

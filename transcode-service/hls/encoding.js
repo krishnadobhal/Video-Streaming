@@ -11,6 +11,9 @@ ffmpeg.setFfmpegPath(binary.path);
 
 dotenv.config();
 
+const PLAYBACK_BASE_URL =
+  process.env.PLAYBACK_BASE_URL || "http://localhost:8082/watch/stream";
+
 const s3 = new AWS.S3({
   endpoint: process.env.EndPoint,
   accessKeyId: process.env.ACCESS_KEY_ID || "krishna",
@@ -85,6 +88,7 @@ const s3ToS3 = async (paramkey) => {
               `-f hls`,
               `-hls_time 10`,
               `-hls_list_size 0`,
+              `-hls_base_url ${PLAYBACK_BASE_URL}/${id}/`,
               `-hls_segment_filename hls/output/${segmentFileName}`,
             ])
             .output(`hls/output/${outputFileName}`)
@@ -110,7 +114,7 @@ const s3ToS3 = async (paramkey) => {
       variantPlaylists
         .map(
           ({ resolution, outputFileName, bandwidth }) =>
-            `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},RESOLUTION=${resolution}\n${outputFileName}`
+            `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},RESOLUTION=${resolution}\n${PLAYBACK_BASE_URL}/${id}/${outputFileName}`
         )
         .join("\n");
 
@@ -120,7 +124,6 @@ const s3ToS3 = async (paramkey) => {
     console.log(`HLS master m3u8 playlist generated`);
 
     console.log(`Deleting locally downloaded s3 mp4 file`);
-
     fs.unlinkSync("local.mp4");
     console.log(`Deleted locally downloaded s3 mp4 file`);
 
@@ -129,6 +132,8 @@ const s3ToS3 = async (paramkey) => {
     const files = fs.readdirSync(hlsFolder);
     console.log("author->", author);
     console.log("file->", filename);
+
+    const s3BaseKey = `${hlsFolder}/${author}/${filename}`;
 
     for (const file of files) {
       if (!file.startsWith(baseFileName)) {
@@ -144,7 +149,7 @@ const s3ToS3 = async (paramkey) => {
 
       const uploadParams = {
         Bucket: bucketName,
-        Key: `${hlsFolder}/${author}/${filename}/${file}`,
+        Key: `${s3BaseKey}/${file}`,
         Body: fileStream,
         ContentType: contentType,
       };
@@ -157,15 +162,16 @@ const s3ToS3 = async (paramkey) => {
     );
 
     console.log("Success. Time taken: ");
-    await prisma.video_data.update({
+    const data = await prisma.video_data.update({
       where: {
         id: id,
       },
       data: {
-        master: `${hlsFolder}/${author}/${filename}/${filename}_master.m3u8`,
+        master: `${s3BaseKey}/${masterPlaylistFileName}`,
       },
     });
     console.timeEnd("req_time");
+    console.log("data", data);
   } catch (error) {
     console.error("Error:", error);
   }
