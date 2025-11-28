@@ -11,6 +11,12 @@ A scalable microservices-based video streaming platform designed for efficient v
   <img src="https://github.com/user-attachments/assets/8709448a-5b7f-496b-9fea-7b00a918f233" alt="System Design VS" />
 </div>
 
+## Key Feature
+
+- **Secure HLS Endpoints:** The streaming endpoints (master playlist and video segments) are now protected and require a valid token to access.
+- **Video-Specific Access:** The middleware verifies not just the validity of the token but also ensures the token is issued specifically for the video being requested, preventing token reuse across different assets.
+- Built a **Transcode Service** with FFmpeg to convert videos into HLS-compatible formats for **adaptive streaming.**
+
 ## Getting Started
 
 ### Prerequisites
@@ -18,6 +24,7 @@ A scalable microservices-based video streaming platform designed for efficient v
 - Docker
 - Docker Compose
 - Node.js (for local development)
+- MINIO (Docker container)
 
 ### Installation
 
@@ -65,22 +72,21 @@ Create a `.env` file in the [Upload-service](http://_vscodecontentref_/5) direct
 
 ```env
 DATABASE_URL=your_database_url
-BROKER=your_kafka_broker
-AIVEN_PASS=your_aiven_password
-AIVEN_USERNAME=your_aiven_username
-AWS_ACCESS_KEY_ID=your_aws_access_key_id
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-AWS_BUCKET=your_aws_bucket
+EndPoint=MINIO Endpoint
+ACCESS_KEY_ID=your_MINIO_secret_key
+SECRET_ACCESS_KEY=your_MINIO_secret_access_key
+AUTH_SECRET=
 ```
 3. Watch
 \
 Create a `.env` file in the [Watch-service](http://_vscodecontentref_/5) directory with the following content:
 
 ```env
-AWS_ACCESS_KEY_ID=your_aws_access_key_id
-AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-AWS_BUCKET=yt-krishna
 DATABASE_URL=your_database_url
+EndPoint=MINIO Endpoint
+ACCESS_KEY_ID=your_MINIO_secret_key
+SECRET_ACCESS_KEY=your_MINIO_secret_access_key
+AUTH_SECRET=
 ```
 
 
