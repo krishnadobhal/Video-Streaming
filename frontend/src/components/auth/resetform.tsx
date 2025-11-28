@@ -1,16 +1,13 @@
 "use client"
 
 
-import { signIn } from "next-auth/react"
 import { Button } from "../ui/button"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { passwordSchema } from "@/types/PasswordSchema"
 import * as z from "zod"
-import { Form,  FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
 import { Input } from "../ui/input"
-import {useAction} from "next-safe-action/hooks"
-import { emailSigin } from "@/Server/actions/email-signin"
+import { useAction } from "next-safe-action/hooks"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { FormSuccess } from "./form-success"
@@ -28,13 +25,13 @@ export default function ResetForm() {
         }
     })
 
-    const [success,setsuccess]=useState('')
-    const [error,seterror]=useState('')
+    const [success, setsuccess] = useState('')
+    const [error, seterror] = useState('')
 
-    const {execute,status,result}=useAction(reset,{
-        onSuccess(data){
-            if(data?.error) seterror(data.error)
-            if(data?.success) setsuccess(data.success)
+    const { execute, status } = useAction(reset, {
+        onSuccess(data) {
+            if (data?.error) seterror(data.error)
+            if (data?.success) setsuccess(data.success)
         }
     })
 
@@ -49,23 +46,23 @@ export default function ResetForm() {
                 <form onSubmit={form.handleSubmit(submit)}>
                     <FormField
                         control={form.control}
-                    name="email"
-                    render={({field}) => (
-                        <FormItem>
-                            <FormLabel />
-                            <FormControl>
-                                <Input {...field} placeholder="example@gmail.com" type="email"/>
-                            </FormControl>
-                            <FormDescription />
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel />
+                                <FormControl>
+                                    <Input {...field} placeholder="example@gmail.com" type="email" />
+                                </FormControl>
+                                <FormDescription />
+                                <FormMessage />
+                            </FormItem>
+                        )}
                     />
-                    <FormSuccess message={success}  />
-                    <FormError message={error}  />
-                    <Button type="submit" className={cn('w-full',status==='executing'? 'animate-pulse' : "")}>{"Reset"}</Button>
+                    <FormSuccess message={success} />
+                    <FormError message={error} />
+                    <Button type="submit" className={cn('w-full', status === 'executing' ? 'animate-pulse' : "")}>{"Reset"}</Button>
                 </form>
-            </Form> 
+            </Form>
         </div>
     )
 }

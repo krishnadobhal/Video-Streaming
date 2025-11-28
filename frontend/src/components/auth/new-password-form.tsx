@@ -1,18 +1,15 @@
 "use client"
 
 
-import { signIn } from "next-auth/react"
 import { Button } from "../ui/button"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { passwordSchema } from "@/types/PasswordSchema"
 import * as z from "zod"
-import { Form,  FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
 import { Input } from "../ui/input"
-import {useAction} from "next-safe-action/hooks"
-import { emailSigin } from "@/Server/actions/email-signin"
+import { useAction } from "next-safe-action/hooks"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
 import { FormSuccess } from "./form-success"
 import { FormError } from "./form-error"
 import { useState } from "react"
@@ -30,21 +27,21 @@ export default function NewPassword() {
 
     const token = useSearchParams().get("token")
 
-    const [success,setsuccess]=useState('')
-    const [error,seterror]=useState('')
+    const [success, setsuccess] = useState('')
+    const [error, seterror] = useState('')
 
-    const {execute,status,result}=useAction(newPassword,{
-        onSuccess(data){
-            if(data?.error) seterror(data.error)
-            if(data?.success) setsuccess(data.success)
+    const { execute, status } = useAction(newPassword, {
+        onSuccess(data) {
+            if (data?.error) seterror(data.error)
+            if (data?.success) setsuccess(data.success)
         }
     })
 
     const submit = (values: z.infer<typeof passwordSchema>) => {
         console.log(token);
-        
-        console.log({password:values.password,token:token});
-        const val={password:values.password,token:token}
+
+        console.log({ password: values.password, token: token });
+        const val = { password: values.password, token: token }
         execute(val)
 
     }
@@ -55,24 +52,24 @@ export default function NewPassword() {
                 <form onSubmit={form.handleSubmit(submit)}>
                     <FormField
                         control={form.control}
-                    name="password"
-                    render={({field}) => (
-                        <FormItem>
-                            <FormLabel />
-                            <FormControl>
-                                <Input {...field} placeholder="********" type="password"/>
-                            </FormControl>
-                            <FormDescription />
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel />
+                                <FormControl>
+                                    <Input {...field} placeholder="********" type="password" />
+                                </FormControl>
+                                <FormDescription />
+                                <FormMessage />
+                            </FormItem>
+                        )}
                     />
-                    <FormSuccess message={success}  />
-                    <FormError message={error}  />
-                    <Button type="submit" className={cn('w-full',status==='executing'? 'animate-pulse' : "")}>{"Reset"}</Button>
+                    <FormSuccess message={success} />
+                    <FormError message={error} />
+                    <Button type="submit" className={cn('w-full', status === 'executing' ? 'animate-pulse' : "")}>{"Reset"}</Button>
                 </form>
             </Form>
-            
+
         </div>
     )
 }

@@ -2,7 +2,7 @@
 import { createSafeActionClient } from "next-safe-action"
 import { passwordSchema } from "@/types/PasswordSchema"
 import { getpasswordTokenByToken } from "./token"
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs";
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 

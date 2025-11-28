@@ -24,7 +24,7 @@ async function generateSignedUrl(videoKey) {
     const params = {
         Bucket: process.env.AWS_BUCKET,
         Key: videoKey,
-        Expires: 3600 // URL expires in 1 hour, adjust as needed
+        Expires: 3600
     };
 
     return new Promise((resolve, reject) => {
@@ -41,7 +41,7 @@ async function generateSignedUrl(videoKey) {
 const watchVideo = async (req, res) => {
     try {
 
-        const videoKey = req.params.id; // Key of the video file in S3
+        const videoKey = req.params.id;
         console.log(videoKey);
         const key = await prisma.video_data.findUnique({
             where: {
@@ -72,7 +72,7 @@ export const streamMaster = async (req, res) => {
             return res.status(404).send("Video not found");
         }
 
-        const key = video.master; // full S3 key to master.m3u8
+        const key = video.master;
 
         const s3Stream = s3
             .getObject({
@@ -157,10 +157,6 @@ export const streamAsset = async (req, res) => {
  * Generate a streaming token for a video.
  * This endpoint should be called by authenticated users to get a token
  * that can be used to access streaming endpoints.
- * 
- * NOTE: In production, this endpoint should be protected by session-based
- * authentication from your application (e.g., NextAuth session validation).
- * The current implementation validates the video exists before issuing a token.
  */
 export const getStreamToken = async (req, res) => {
     try {

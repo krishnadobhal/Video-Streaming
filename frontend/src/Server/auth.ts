@@ -8,13 +8,13 @@ import Credential from "next-auth/providers/credentials"
 import { loginSchema } from "@/types/LoginSchema"
 import { accounts, users } from "./schema"
 import { eq } from "drizzle-orm"
-import bcrypt from "bcrypt"
- 
+import bcrypt from "bcryptjs"
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
-  session:{strategy:'jwt'},
-  secret:process.env.AUTH_SECRET!,
-  callbacks:{
+  session: { strategy: 'jwt' },
+  secret: process.env.AUTH_SECRET!,
+  callbacks: {
     async session({ session, token }) {
       if (session && token.sub) {
         session.user.id = token.sub
@@ -52,15 +52,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   providers: [
     google({
-        clientId:process.env.Google_Client!,
-        clientSecret:process.env.Google_Secret!
+      clientId: process.env.Google_Client!,
+      clientSecret: process.env.Google_Secret!
     }),
     github({
-        clientId:process.env.Github_Client!,
-        clientSecret:process.env.Github_Secret!
+      clientId: process.env.Github_Client!,
+      clientSecret: process.env.Github_Secret!
     }),
     Credential({
-      authorize:async(credentials)=>{
+      authorize: async (credentials) => {
         const validatedFields = loginSchema.safeParse(credentials)
 
         if (validatedFields.success) {

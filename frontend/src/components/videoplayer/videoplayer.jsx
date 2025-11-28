@@ -27,7 +27,9 @@ export const VideoPlayer = (props) => {
         },
         () => {
           videojs.log("player is ready");
-          onReady && onReady(player);
+          if (onReady) {
+            onReady(player);
+          }
         }
       ));
     } else {
@@ -55,6 +57,7 @@ export const VideoPlayer = (props) => {
           }
         } catch (e) {
           // Fallback: simple query append if URL parsing fails
+          console.error("Error parsing URL:", e);
           const separator = opts.uri.includes("?") ? "&" : "?";
           if (!opts.uri.includes("token=")) {
             opts.uri = `${opts.uri}${separator}token=${streamToken}`;

@@ -28,7 +28,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/video.js": "^7.3.58",
     "axios": "^1.7.8",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",

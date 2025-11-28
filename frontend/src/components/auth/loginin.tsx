@@ -27,7 +27,6 @@ import { useRouter } from "next/navigation";
 import {
     InputOTP,
     InputOTPGroup,
-    InputOTPSeparator,
     InputOTPSlot,
 } from "@/components/ui/input-otp";
 
@@ -45,7 +44,7 @@ export default function Loginconponent() {
     const [error, seterror] = useState("");
     const [showTwoFactor, setShowTwoFactor] = useState(false);
 
-    const { execute, status, result } = useAction(emailSigin, {
+    const { execute, status } = useAction(emailSigin, {
         onSuccess(data) {
             if (data?.error) seterror(data.error);
             if (data?.success) setsuccess(data.success);

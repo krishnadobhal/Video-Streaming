@@ -2,7 +2,6 @@
 import React, { useCallback, useState } from "react";
 import axios from "axios";
 import { useSession } from "next-auth/react"
-import { NextURL } from "next/dist/server/web/next-url";
 import { Image } from "lucide-react";
 
 const UploadForm = () => {
@@ -11,10 +10,9 @@ const UploadForm = () => {
     const [description, setDescription] = useState("");
     // const [author, setAuthor] = useState("");
     const [selectedFile, setSelectedFile] = useState<File>();
-    const [ImageURL, setImageURL] = useState("")
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadCompleted, setuploadCompleted] = useState(false);
-    
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -25,7 +23,7 @@ const UploadForm = () => {
 
     const handleUpload = async () => {
         setuploadCompleted(false)
-        if (!title ) {
+        if (!title) {
             alert("Title and Author are required fields.");
             return;
         }
@@ -108,12 +106,12 @@ const UploadForm = () => {
     };
 
     const handlerInputChangeFile = useCallback((input: HTMLInputElement) => {
-        if(!title){
+        if (!title) {
             console.error("No title");
         }
-        console.log("title",title);
-        console.log("author",session.data?.user.name);
-        
+        console.log("title", title);
+        console.log("author", session.data?.user.name);
+
 
         return async (event: Event) => {
 
@@ -123,8 +121,8 @@ const UploadForm = () => {
             if (!file) return;
             console.log(file);
 
-            
-            const res = await axios.post("http://localhost:8080/upload/thumbnail",{
+
+            const res = await axios.post("http://localhost:8080/upload/thumbnail", {
                 author: session.data?.user.name,
                 title: title,
                 imageType: file.type
@@ -137,11 +135,11 @@ const UploadForm = () => {
 
             // if (res.data) {
 
-                await axios.put(res.data.url, file, {
-                    headers: {
-                        "Content-Type": file.type,
-                    },
-                });
+            await axios.put(res.data.url, file, {
+                headers: {
+                    "Content-Type": file.type,
+                },
+            });
 
 
             //     const url = new NextURL(getSignedUrlForTweet);
@@ -150,7 +148,7 @@ const UploadForm = () => {
             // }
 
         }
-    }, [title,session])
+    }, [title, session])
 
     const handleSelectImage = useCallback(() => {
         const input = document.createElement("input");
@@ -187,7 +185,7 @@ const UploadForm = () => {
                         className="px-3 py-2 w-full border rounded-md focus:outline-none focus:border-blue-500"
                     />
                 </div>
-                
+
                 <div className="mb-4">
                     <input
                         type="file"

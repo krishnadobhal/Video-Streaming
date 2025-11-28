@@ -6,17 +6,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Image from "next/image"
-import { Suspense, useEffect, useState } from "react"
-import { LogOut, Moon, Settings, Sun, Truck, TruckIcon } from "lucide-react"
+import { useEffect, useState } from "react"
+import { LogOut, Moon, Settings, Sun, TruckIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Switch } from "../ui/switch"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 export const UserButton = ({ user }: Session) => {
@@ -24,7 +22,7 @@ export const UserButton = ({ user }: Session) => {
   const [checked, setChecked] = useState(false)
   const router = useRouter()
   console.log(user.isOAuth);
-  
+
 
   function setSwitchState() {
     switch (theme) {
@@ -118,7 +116,7 @@ export const UserButton = ({ user }: Session) => {
                 <Switch
                   className="scale-75 "
                   checked={checked}
-                  onCheckedChange={(e: any) => {
+                  onCheckedChange={(e: boolean) => {
                     setChecked((prev) => !prev)
                     if (e) setTheme("dark")
                     if (!e) setTheme("light")

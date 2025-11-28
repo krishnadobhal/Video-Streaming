@@ -23,12 +23,12 @@ export const verifyStreamToken = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        
+
         // Validate that the token's videoId matches the requested video
         if (decoded.videoId && decoded.videoId !== requestedVideoId) {
             return res.status(403).json({ error: "Token not valid for this video" });
         }
-        
+
         req.user = decoded;
         next();
     } catch (err) {
@@ -59,3 +59,10 @@ export const generateStreamToken = (payload, expiresIn = "1h") => {
 };
 
 export default verifyStreamToken;
+
+
+
+export const VerifyUserToken = (req, res, next) => {
+
+    next();
+}
