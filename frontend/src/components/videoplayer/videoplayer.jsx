@@ -5,49 +5,86 @@ import "video.js/dist/video-js.css";
 export const VideoPlayer = (props) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
-  const { options, onReady } = props;
+  const { options, onReady, streamToken } = props;
 
+  // 1) Init player once
   useEffect(() => {
-    // Make sure Video.js player is only initialized once
     if (!playerRef.current) {
-      // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
       const videoElement = document.createElement("video-js");
-
       videoElement.classList.add("vjs-big-play-centered");
       videoRef.current.appendChild(videoElement);
 
-      const player = (playerRef.current = videojs(videoElement, options, () => {
-        videojs.log("player is ready");
-        onReady && onReady(player);
-      }));
-
-      // You could update an existing player in the `else` block here
-      // on prop change, for example:
+      const player = (playerRef.current = videojs(
+        videoElement,
+        {
+          ...options,
+          html5: {
+            ...options.html5,
+            vhs: {
+              ...(options.html5?.vhs || {}),
+            },
+          },
+        },
+        () => {
+          videojs.log("player is ready");
+          onReady && onReady(player);
+        }
+      ));
     } else {
       const player = playerRef.current;
-
       player.autoplay(options.autoplay);
       player.src(options.sources);
     }
-  }, [options, videoRef]);
+  }, [options, onReady]);
 
-  // Dispose the Video.js player when the functional component unmounts
   useEffect(() => {
     const player = playerRef.current;
+    if (!player || !streamToken) return;
 
+    const applyBeforeRequest = () => {
+      const tech = player.tech(true);
+      if (!tech || !tech.vhs || !tech.vhs.xhr) return;
+
+      tech.vhs.xhr.beforeRequest = (opts) => {
+        try {
+          const url = new URL(opts.uri);
+
+          if (!url.searchParams.has("token")) {
+            url.searchParams.set("token", streamToken);
+            opts.uri = url.toString();
+          }
+        } catch (e) {
+          // Fallback: simple query append if URL parsing fails
+          const separator = opts.uri.includes("?") ? "&" : "?";
+          if (!opts.uri.includes("token=")) {
+            opts.uri = `${opts.uri}${separator}token=${streamToken}`;
+          }
+        }
+
+        return opts;
+      };
+    };
+
+    if (player.isReady_) {
+      applyBeforeRequest();
+    } else {
+      player.ready(applyBeforeRequest);
+    }
+  }, [streamToken]);
+
+  // 3) Dispose on unmount
+  useEffect(() => {
+    const player = playerRef.current;
     return () => {
       if (player && !player.isDisposed()) {
         player.dispose();
         playerRef.current = null;
       }
     };
-  }, [playerRef]);
+  }, []);
 
   return (
-    <div
-      data-vjs-player
-      style={{ width: "600px" }}
-    >
+    <div data-vjs-player style={{ width: "600px" }}>
       <div ref={videoRef} />
     </div>
   );

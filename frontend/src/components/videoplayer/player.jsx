@@ -10,12 +10,41 @@ const HLS_BASE_URL =
 const Fullplayer = () => {
   const id = useSearchParams().get("v")
   const playerRef = useRef(null);
+  const [streamToken, setStreamToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStreamToken = async () => {
+      if (!id) return;
+      
+      try {
+        const response = await axios.get(`${HLS_BASE_URL}/watch/stream/${id}/token`);
+        setStreamToken(response.data.token);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching stream token:", err);
+        setError("Failed to authenticate for video streaming");
+        setLoading(false);
+      }
+    };
+
+    fetchStreamToken();
+  }, [id]);
 
   if (!id) {
     return <div>No video ID provided</div>;
   }
 
-  const masterUrl = `${HLS_BASE_URL}/watch/stream/${id}/master.m3u8`;
+  if (loading) {
+    return <div>Loading video...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  const masterUrl = `${HLS_BASE_URL}/watch/stream/${id}/master.m3u8?token=${streamToken}`;
 
   const videoPlayerOptions = {
     controls: true,
@@ -43,6 +72,7 @@ const Fullplayer = () => {
       <VideoPlayer
         options={videoPlayerOptions}
         onReady={handlePlayerReady}
+        streamToken={streamToken}
       />
     </div>
   );
