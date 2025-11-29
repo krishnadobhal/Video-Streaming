@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken";
+import * as jose from "jose";
+import { getAuthJsDerivedKey } from "./utils.js";
 
 const JWT_SECRET = process.env.AUTH_SECRET;
 
@@ -43,26 +45,33 @@ export const verifyStreamToken = (req, res, next) => {
     }
 };
 
-/**
- * Generate a streaming token for a user.
- * This can be called from a protected endpoint to get a token for streaming.
- * 
- * @param {object} payload - User data to encode in the token
- * @param {string} expiresIn - Token expiration time (default: 1h)
- * @returns {string} JWT token
- */
-export const generateStreamToken = (payload, expiresIn = "1h") => {
-    if (!JWT_SECRET) {
-        throw new Error("AUTH_SECRET environment variable is not set");
+
+export const VerifyUserToken = async (req, res, next) => {
+
+    try {
+        const sessionCookie = req.cookies["authjs.session-token"];
+
+        if (!sessionCookie) {
+            return res.status(401).json({ message: "Not authenticated" });
+        }
+
+        // console.log("Session Cookie:", sessionCookie);
+        const encryptionKey = await getAuthJsDerivedKey();
+
+        const { plaintext } = await jose.compactDecrypt(sessionCookie, encryptionKey);
+        const payload = JSON.parse(new TextDecoder().decode(plaintext));
+        if (!payload || !payload.sub) {
+            return res.status(401).json({ message: "Invalid session token" });
+        }
+        if (payload.exp && Date.now() >= payload.exp * 1000) {
+            return res.status(401).json({ message: "Session token has expired" });
+        }
+        console.log("Authenticated User Payload:", payload);
+        req.user = payload;
+        next();
     }
-    return jwt.sign(payload, JWT_SECRET, { expiresIn });
-};
-
-export default verifyStreamToken;
-
-
-
-export const VerifyUserToken = (req, res, next) => {
-
-    next();
+    catch (err) {
+        console.error("Error in VerifyUserToken middleware:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
 }

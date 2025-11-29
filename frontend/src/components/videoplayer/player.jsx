@@ -17,9 +17,9 @@ const Fullplayer = () => {
   useEffect(() => {
     const fetchStreamToken = async () => {
       if (!id) return;
-      
+
       try {
-        const response = await axios.get(`${HLS_BASE_URL}/watch/stream/${id}/token`);
+        const response = await axios.get(`${HLS_BASE_URL}/watch/stream/${id}/token`, { withCredentials: true });
         setStreamToken(response.data.token);
         setLoading(false);
       } catch (err) {

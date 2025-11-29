@@ -4,7 +4,7 @@ dotenv.config()
 import { PrismaClient } from '@prisma/client'
 import axios from "axios"
 import path from "path";
-import { generateStreamToken } from "../middleware/auth.middleware.js";
+import { generateStreamToken } from "../middleware/utils.js"
 
 const prisma = new PrismaClient()
 
