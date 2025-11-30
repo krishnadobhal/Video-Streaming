@@ -5,12 +5,12 @@ dotenv.config();
 class KafkaConfig {
     constructor() {
         this.kafka = new Kafka({
-            clientId: "upload-service",
+            clientId: "transcode-service",
             brokers: ["localhost:9092"],
         });
 
         this.producer = this.kafka.producer();
-        this.consumer = this.kafka.consumer({ groupId: "youtube-uploader" });
+        this.consumer = this.kafka.consumer({ groupId: "transcode-service" });
         this.isProducerConnected = false;
         this.isConsumerConnected = false;
     }
@@ -19,7 +19,7 @@ class KafkaConfig {
         if (!this.isProducerConnected) {
             await this.producer.connect();
             this.isProducerConnected = true;
-            console.log("Upload producer connected");
+            console.log("Transcode producer connected");
         }
     }
 
@@ -27,7 +27,7 @@ class KafkaConfig {
         if (!this.isConsumerConnected) {
             await this.consumer.connect();
             this.isConsumerConnected = true;
-            console.log("Upload consumer connected");
+            console.log("Transcode consumer connected");
         }
     }
 
@@ -36,7 +36,7 @@ class KafkaConfig {
             await this.connectProducer();
             await this.producer.send({ topic, messages });
         } catch (error) {
-            console.error("Upload produce error:", error);
+            console.error("Transcode produce error:", error);
         }
     }
 
@@ -51,7 +51,7 @@ class KafkaConfig {
                 },
             });
         } catch (error) {
-            console.error("Upload consume error:", error);
+            console.error("Transcode consume error:", error);
         }
     }
 }
