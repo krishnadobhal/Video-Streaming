@@ -1,12 +1,13 @@
 import express from 'express';
 import KafkaConfig from "./kafka/kafka.ts"
-import { ConsumeMessage } from './service/service.ts';
+import { ConsumeMessage, GetSubtitle } from './service/service.ts';
 import { KafkaMessage } from './types/index.ts';
-
+import cors from "cors"
 
 const port = process.env.PORT || 7070;
 
 const app = express();
+app.use(cors());
 const kafkaConfig = new KafkaConfig();
 
 
@@ -20,9 +21,14 @@ kafkaConfig.consume("youtube", async (message) => {
 });
 
 
-app.get('/', (req, res) => {
-    res.send('Audio Transcription Service is running');
-});
+app.get('/get-subtitle/:id', async (req, res) => {
+    const { id } = req.params;
+    const subtitleBuffer = await GetSubtitle(id);
+    res.setHeader("Content-Type", "text/vtt; charset=utf-8");
+    res.setHeader("Content-Disposition", "inline"); // make browser load directly
+
+    return res.send(subtitleBuffer);
+})
 
 app.listen(port, () => {
     console.log(`Server is listening at http://localhost:${port}`);

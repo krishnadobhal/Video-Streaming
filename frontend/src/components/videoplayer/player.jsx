@@ -56,6 +56,7 @@ const Fullplayer = () => {
         type: "application/x-mpegURL",
       },
     ],
+    tracks: [{ src: `http://localhost:7070/get-subtitle/${id}`, kind: 'captions', srclang: 'en', label: 'English' }]
   };
 
   const handlePlayerReady = (player) => {

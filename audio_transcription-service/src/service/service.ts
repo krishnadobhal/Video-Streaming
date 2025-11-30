@@ -5,6 +5,14 @@ import AWS from "aws-sdk";
 import path from "path";
 import { convertMp4ToMp3, transcribeWithWhisperCLI } from "@/utils/utils.ts";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+
+const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL
+});
+
+const client = new PrismaClient({ adapter });
 dotenv.config();
 
 const s3 = new AWS.S3({
@@ -54,11 +62,50 @@ export async function ConsumeMessage(message: KafkaMessage) {
     const transcript = await transcribeWithWhisperCLI(localMp3);
     await TranscribeS3.upload({
         Bucket: "transcribe-krishna",
-        Key: `transcripts/${message.author}/${path.basename(transcript)}`,
+        Key: `transcripts/${message.author}/${mp4FileName}.vtt`,
         Body: fs.createReadStream(transcript)
     }).promise();
     fs.unlinkSync(localMp4);
     fs.unlinkSync(localMp3);
     fs.unlinkSync(transcript);
+    await SaveSubtitleDetails(message.id, `transcripts/${message.author}/${mp4FileName}.vtt`);
     console.log("Transcript:", transcript);
+}
+
+export async function GetSubtitle(id: string): Promise<Buffer> {
+    const subtitleKey = await GetSubtitleDetails(id);
+    if (!subtitleKey) {
+        throw new Error("Subtitle not found for the given author and key.");
+    }
+
+    const { Body } = await TranscribeS3
+        .getObject({
+            Bucket: "transcribe-krishna",
+            Key: subtitleKey
+        })
+        .promise();
+
+    return Body as Buffer;
+}
+
+export const GetSubtitleDetails = async (id: string) => {
+    const key = await client.video_data.findUnique({
+        where: {
+            id: id
+        }
+    })
+    const subtitleKey = key?.subtitle || null;
+    return subtitleKey;
+}
+
+export const SaveSubtitleDetails = async (id: string, subtitlePath: string) => {
+    console.log("Saving subtitle path to database:", subtitlePath);
+    await client.video_data.update({
+        where: {
+            id: id
+        },
+        data: {
+            subtitle: subtitlePath
+        }
+    })
 }
