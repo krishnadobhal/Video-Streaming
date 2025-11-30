@@ -3,9 +3,9 @@ import fs from "fs";
 const bucketName = 'yt-krishna';
 import AWS from "aws-sdk";
 import path from "path";
-import ffmpeg from "fluent-ffmpeg";
-
-ffmpeg.setFfmpegPath("C:\\ProgramData\\chocolatey\\lib\\ffmpeg\\tools\\ffmpeg\\bin\\ffmpeg.exe");
+import { convertMp4ToMp3, transcribeWithWhisperCLI } from "@/utils/utils.ts";
+import dotenv from "dotenv";
+dotenv.config();
 
 const s3 = new AWS.S3({
     endpoint: process.env.EndPoint,
@@ -24,25 +24,26 @@ export async function ConsumeMessage(message: KafkaMessage) {
     const mp4FilePath = `${mp4FileName}`;
     console.log("file", mp4FilePath);
     const writeStream = fs.createWriteStream("local.mp4");
+
+    const localMp4 = path.join(process.cwd(), "local.mp4");
+    const localMp3 = path.join(process.cwd(), "output.mp3");
+
     const readStream = s3
         .getObject({ Bucket: bucketName, Key: mp4FilePath })
         .createReadStream();
-    readStream.pipe(writeStream);
-    await new Promise((resolve, reject) => {
-        writeStream.on("finish", () => resolve(null));
+    await new Promise<void>((resolve, reject) => {
+        readStream.on("error", reject);
         writeStream.on("error", reject);
+        writeStream.on("finish", () => resolve());
+        readStream.pipe(writeStream);
     });
-    const inputPath = path.join(__dirname, 'local.mp4');
-    const outputPath = path.join(__dirname, 'output.mp3');
-    console.log("Downloaded s3 mp4 file locally 2");
-    ffmpeg(inputPath)
-        .noVideo() // Extract only the audio stream
-        .audioCodec('libmp3lame') // Specify MP3 audio codec
-        .save(outputPath)
-        .on('end', () => {
-            console.log('Conversion finished successfully!');
-        })
-        .on('error', (err) => {
-            console.error('Error during conversion:', err);
-        });
+
+    console.log("Downloaded mp4 locally");
+
+    // 2) Convert to mp3
+    await convertMp4ToMp3(localMp4, localMp3);
+
+    // 3) Transcribe with Whisper CLI
+    const transcript = await transcribeWithWhisperCLI(localMp3);
+    console.log("Transcript:", transcript);
 }

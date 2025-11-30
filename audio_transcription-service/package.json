@@ -18,7 +18,7 @@
     "@types/express": "^5.0.5",
     "@types/fluent-ffmpeg": "^2.1.28",
     "@types/kafkajs": "^1.8.2",
-    "aws-sdk": "^2.1692.0",
+    "aws-sdk": "^2.1691.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "fluent-ffmpeg": "^2.1.3",
