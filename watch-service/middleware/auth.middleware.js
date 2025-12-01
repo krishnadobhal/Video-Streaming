@@ -55,10 +55,12 @@ export const VerifyUserToken = async (req, res, next) => {
             return res.status(401).json({ message: "Not authenticated" });
         }
 
-        // console.log("Session Cookie:", sessionCookie);
+        // Auth.js v5 use HMAC-based Key Derivation Function (HKDF) to derive encryption keys from the JWT secret.
         const encryptionKey = await getAuthJsDerivedKey();
 
+        // Decrypt the session cookie
         const { plaintext } = await jose.compactDecrypt(sessionCookie, encryptionKey);
+
         const payload = JSON.parse(new TextDecoder().decode(plaintext));
         if (!payload || !payload.sub) {
             return res.status(401).json({ message: "Invalid session token" });
