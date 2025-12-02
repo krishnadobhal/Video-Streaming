@@ -7,9 +7,8 @@ A scalable microservices-based video streaming platform designed for efficient v
 
 ## System Design
 
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/8709448a-5b7f-496b-9fea-7b00a918f233" alt="System Design VS" />
-</div>
+![Uploading Video.png…]()
+
 
 ## Key Feature
 
