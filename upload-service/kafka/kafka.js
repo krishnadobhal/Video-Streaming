@@ -1,4 +1,4 @@
-import { Kafka } from "kafkajs";
+import { Kafka, Partitioners } from "kafkajs";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -8,8 +8,8 @@ class KafkaConfig {
             clientId: "upload-service",
             brokers: ["localhost:9092"],
         });
-
-        this.producer = this.kafka.producer();
+        // Use LegacyPartitioner(RoundRobin),otherwise it uses DefaultPartitioner(Sticky Partitioning) 
+        this.producer = this.kafka.producer({ createPartitioner: Partitioners.LegacyPartitioner, });
         this.consumer = this.kafka.consumer({ groupId: "youtube-uploader" });
         this.isProducerConnected = false;
         this.isConsumerConnected = false;
@@ -34,7 +34,8 @@ class KafkaConfig {
     async produce(topic, messages) {
         try {
             await this.connectProducer();
-            await this.producer.send({ topic, messages });
+            const result = await this.producer.send({ topic, messages });
+            console.log("Upload produce result:", result);
         } catch (error) {
             console.error("Upload produce error:", error);
         }

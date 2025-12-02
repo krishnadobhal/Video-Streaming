@@ -9,7 +9,7 @@ app.use(express.json());
 
 const kafkaconfig = new KafkaConfig();
 
-const MAX_CONCURRENT_JOBS = parseInt(process.env.MAX_CONCURRENT_JOBS) || 3;
+const MAX_CONCURRENT_JOBS = parseInt(process.env.MAX_CONCURRENT_JOBS) || 1;//how many partitions to consume concurrently
 const PROCESSING_TIMEOUT = parseInt(process.env.PROCESSING_TIMEOUT) || 30 * 60 * 1000; // 30 minutes
 const MAX_RETRIES = parseInt(process.env.MAX_RETRIES) || 3;
 
@@ -174,7 +174,6 @@ app.get("/stats", (req, res) => {
    });
 });
 
-app.listen(81);
 
 startConsumer().catch(err => {
    console.error("Failed to start consumer:", err);

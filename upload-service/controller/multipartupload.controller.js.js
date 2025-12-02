@@ -43,7 +43,6 @@ export const initializeUpload = async (req, res) => {
 // Upload chunk
 export const uploadChunk = async (req, res) => {
     try {
-        console.log("Uploading Chunk");
         const { filename, chunkIndex, uploadId } = req.body;
         const s3 = new AWS.S3({
             endpoint: "http://localhost:9000",
@@ -63,7 +62,6 @@ export const uploadChunk = async (req, res) => {
         };
 
         const data = await s3.uploadPart(partParams).promise();
-        console.log("data------- ", data);
         res.status(200).json({ success: true });
     } catch (err) {
         console.error("Error uploading chunk:", err);
@@ -109,7 +107,6 @@ export const completeUpload = async (req, res) => {
             .completeMultipartUpload(completeParams)
             .promise();
 
-        console.log("data----- ", uploadResult);
         const url = uploadResult.Location;
         const videodetails = await addVideoDetailsToDB(title, description, author, url);
         console.log(videodetails.id);
