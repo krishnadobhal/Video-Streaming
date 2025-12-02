@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { spawn } from "child_process";
 import ffmpeg from "fluent-ffmpeg";
 import path from "path";
 import fs from "fs";
@@ -27,14 +27,29 @@ export function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<
     });
 }
 
+// This will not block the event loop. It only blocks your function until the Promise resolves.
 export async function transcribeWithWhisperCLI(audioPath: string): Promise<string> {
     const outputDir = path.dirname(audioPath);
-    const cmd = `"${WHISPER_CLI}" "${audioPath}" --model small --language en --output_format vtt --output_dir "${outputDir}"`;
-
-    execSync(cmd, { stdio: "inherit" });
-
     const base = path.basename(audioPath, path.extname(audioPath));
     const vttPath = path.join(outputDir, `${base}.vtt`);
 
-    return vttPath;
+    return new Promise<string>((resolve, reject) => {
+        const args = [
+            audioPath,
+            "--model", "small",
+            "--language", "en",
+            "--output_format", "vtt",
+            "--output_dir", outputDir
+        ];
+
+        const proc = spawn(process.env.WHISPER_CLI || "whisper", args, {
+            stdio: "inherit"
+        });
+
+        proc.on("error", reject);
+        proc.on("close", (code) => {
+            if (code === 0) resolve(vttPath);
+            else reject(new Error(`Whisper exited with code ${code}`));
+        });
+    });
 }
