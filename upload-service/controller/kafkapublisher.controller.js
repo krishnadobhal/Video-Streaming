@@ -22,7 +22,7 @@ const sendMessageToKafka = async (req, res) => {
 }
 export default sendMessageToKafka;
 
-export const pushVideoForEncodingToKafka = async (title, author, id, location) => {
+export const pushVideoForEncodingToKafka = async (topic, title, author, id, location) => {
     try {
         const message = {
             "title": title,
@@ -34,7 +34,7 @@ export const pushVideoForEncodingToKafka = async (title, author, id, location) =
         const msgs = [
             { value: JSON.stringify(message) }
         ];
-        const result = await kafkaconfig.produce("youtube", msgs);
+        const result = await kafkaconfig.produce(topic, msgs);
 
     } catch (error) {
         console.log(error)

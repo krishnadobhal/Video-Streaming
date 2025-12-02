@@ -12,7 +12,7 @@ const kafkaConfig = new KafkaConfig();
 
 
 
-kafkaConfig.consume("youtube", async (message) => {
+kafkaConfig.consume("audio", async (message) => {
     console.log("Received message:", message.value?.toString())
     const messageValue = message.value ? JSON.parse(message.value.toString()) as KafkaMessage : null;
     if (messageValue) {
