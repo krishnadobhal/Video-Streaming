@@ -45,8 +45,9 @@ export async function transcribeWithWhisperCLI(audioPath: string): Promise<strin
         const proc = spawn(process.env.WHISPER_CLI || "whisper", args, {
             stdio: "inherit"
         });
-
+        //Handle errors from the spawning process
         proc.on("error", reject);
+        //When the process closes, check the exit code and return the path to the VTT file if successful
         proc.on("close", (code) => {
             if (code === 0) resolve(vttPath);
             else reject(new Error(`Whisper exited with code ${code}`));
