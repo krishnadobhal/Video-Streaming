@@ -1,4 +1,4 @@
-# Video Streaming
+<img width="1718" height="2294" alt="Video" src="https://github.com/user-attachments/assets/50233284-1458-4b40-93e6-2e21933b5831" /># Video Streaming
 A scalable microservices-based video streaming platform designed for efficient video upload, transcoding, and adaptive playback.
 
 ## Table of Contents
@@ -7,7 +7,8 @@ A scalable microservices-based video streaming platform designed for efficient v
 
 ## System Design
 
-![Uploading Video.png…]()
+<img width="1718" height="2294" alt="Video" src="https://github.com/user-attachments/assets/fe0e0e76-9eab-4b90-81e9-aca90b130633" />
+
 
 
 ## Key Feature
@@ -15,6 +16,7 @@ A scalable microservices-based video streaming platform designed for efficient v
 - **Secure HLS Endpoints:** The streaming endpoints (master playlist and video segments) are now protected and require a valid token to access.
 - **Video-Specific Access:** The middleware verifies not just the validity of the token but also ensures the token is issued specifically for the video being requested, preventing token reuse across different assets.
 - Built a **Transcode Service** with FFmpeg to convert videos into HLS-compatible formats for **adaptive streaming.**
+- Audio Transcription using **Whisper AI**
 
 ## Getting Started
 
@@ -87,6 +89,17 @@ ACCESS_KEY_ID=your_MINIO_secret_key
 SECRET_ACCESS_KEY=your_MINIO_secret_access_key
 AUTH_SECRET=
 ```
+3. Audio Transcription
+\
+Create a `.env` file in the [audio_transcription-service](http://_vscodecontentref_/5) directory with the following content:
+
+```env
+DATABASE_URL=your_database_url
+EndPoint=MINIO Endpoint
+ACCESS_KEY_ID=your_MINIO_secret_key
+SECRET_ACCESS_KEY=your_MINIO_secret_access_key
+AUTH_SECRET=
+```
 
 
 ### Running the Project
@@ -114,8 +127,8 @@ AUTH_SECRET=
     - Open http://localhost:3000 with your browser to see the result.
 
 
-2. Transcode
-    - Naviate to frontend
+2. Transcode Service
+    - Naviate to Transcode
         
         ```cd transcode-service```
 
@@ -128,10 +141,22 @@ AUTH_SECRET=
         ```npm run dev```
 
 
-4. watch
-    - Naviate to frontend
+4. Watch Service
+    - Naviate to Watch
         
         ```cd watch-service```
+
+    - Install dependencies
+
+        ```npm install```
+
+    - Run the development server    
+
+        ```npm run dev```
+5. Audio Transcription Service
+    - Naviate to Audio Transcription Service
+        
+        ```cd audio_transcription-service```
 
     - Install dependencies
 
