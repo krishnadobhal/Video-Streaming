@@ -50,6 +50,8 @@
     "tailwindcss-animate": "^1.0.7",
     "video.js": "^8.20.0",
     "videojs-contrib-hls": "^5.15.0",
+    "videojs-contrib-quality-levels": "^4.1.0",
+    "videojs-hls-quality-selector": "^2.0.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

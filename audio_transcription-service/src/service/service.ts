@@ -1,4 +1,4 @@
-import { KafkaMessage } from "@/types/index.ts";
+import { KafkaMessagePayload } from "@/types/index.ts";
 import fs from "fs";
 const bucketName = 'yt-krishna';
 import AWS from "aws-sdk";
@@ -30,7 +30,7 @@ const TranscribeS3 = new AWS.S3({
     signatureVersion: "v4"
 });
 
-export async function ConsumeMessage(message: KafkaMessage) {
+export async function ConsumeMessage(message: KafkaMessagePayload) {
     console.log("Consuming message...");
     // const transcript = await whisper();
     const mp4FileName = message.title;

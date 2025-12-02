@@ -1,46 +1,64 @@
-import express from "express"
-import KafkaConfig from "./kafka/kafka.js"
-import cors from "cors"
-import s3ToS3 from "./hls/encoding.js"
+import express from "express";
+import cors from "cors";
+import KafkaConfig from "./kafka/kafka.js";
+import s3ToS3 from "./hls/encoding.js";
+import { processEachMessage } from "./service/kafkaservice.js";
 
-const app = express()
-app.use(cors())
-const kafkaconfig = new KafkaConfig()
-let isSystemFree = true;
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-kafkaconfig.consume("youtube", async (message) => {
-   const value = JSON.parse(message);
-   console.log("value", value);
-   if (value && value.title) {
-      if (isSystemFree) {
-         try {
-            console.log("Processing file:", value.title);
-            isSystemFree = false;
-            kafkaconfig.consumer.pause([{ topic: "youtube" }]);
+const kafkaconfig = new KafkaConfig();
 
-            await s3ToS3(value);
+const MAX_CONCURRENT_JOBS = parseInt(process.env.MAX_CONCURRENT_JOBS) || 1;//how many partitions to consume concurrently
 
-            console.log("Finished processing:", value.title);
-            isSystemFree = true;
-            kafkaconfig.consumer.resume([{ topic: "youtube" }]);
-         } catch (error) {
-            console.error("Error during file processing:", error);
-            isSystemFree = true; // Ensure system is marked free on error
-            kafkaconfig.consumer.resume([{ topic: "youtube" }]); // Resume consumption
-         }
-      } else {
-         console.log("System busy, message will be processed when consumer resumes.");
+// Track active jobs with metadata
+const activeJobs = new Map();
+
+async function startConsumer() {
+   // Ensure consumer is connected and subscribed before running
+   await kafkaconfig.consumer.connect();
+   await kafkaconfig.consumer.subscribe({ topic: "youtube", fromBeginning: false });
+
+   await kafkaconfig.consumer.run({
+      autoCommit: false, // Disable auto commit
+      partitionsConsumedConcurrently: MAX_CONCURRENT_JOBS,
+
+      // Use autoCommit: false for manual offset control if needed
+      eachMessage: async ({ topic, partition, message, heartbeat, pause }) => {
+         await processEachMessage({ activeJobs, topic, partition, message, heartbeat, pause });
       }
-   } else {
-      console.log("Message is missing filename. Skipping.");
-   }
+   });
+}
 
-})
+app.get("/health", (req, res) => {
+   res.json({
+      activeJobs: activeJobs.size,
+      maxConcurrent: MAX_CONCURRENT_JOBS,
+      uptime: process.uptime()
+   });
+});
 
-app.get("/", async (req, res) => {
-   await s3ToS3()
-   res.send("encoding")
-})
+app.get("/stats", (req, res) => {
+   const jobs = Array.from(activeJobs.values()).map(job => ({
+      id: job.id,
+      videoId: job.videoId,
+      title: job.title,
+      duration: ((Date.now() - job.startTime) / 1000).toFixed(2) + "s",
+      partition: job.partition
+   }));
 
-app.listen(81)
+   res.json({
+      activeJobs: jobs,
+      count: activeJobs.size,
+      capacity: MAX_CONCURRENT_JOBS,
+      available: MAX_CONCURRENT_JOBS - activeJobs.size
+   });
+});
+
+
+startConsumer().catch(err => {
+   console.error("Failed to start consumer:", err);
+   process.exit(1);
+});
 

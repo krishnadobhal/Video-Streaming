@@ -54,6 +54,12 @@ class KafkaConfig {
             console.error("Transcode consume error:", error);
         }
     }
+
+    async heartbeat() {
+        if (this.consumer) {
+            return this.consumer.heartbeat?.();
+        }
+    }
 }
 
 export default KafkaConfig;
