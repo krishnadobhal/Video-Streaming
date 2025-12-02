@@ -1,4 +1,3 @@
-<img width="1718" height="2294" alt="Video" src="https://github.com/user-attachments/assets/50233284-1458-4b40-93e6-2e21933b5831" /># Video Streaming
 A scalable microservices-based video streaming platform designed for efficient video upload, transcoding, and adaptive playback.
 
 ## Table of Contents
