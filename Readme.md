@@ -6,7 +6,7 @@ A scalable microservices-based video streaming platform designed for efficient v
 
 ## System Design
 <div align="center">
-    <img width="1200" height="1602" alt="Video" src="https://github.com/user-attachments/assets/fe0e0e76-9eab-4b90-81e9-aca90b130633" />
+    <img width="900" height="1202" alt="Video" src="https://github.com/user-attachments/assets/fe0e0e76-9eab-4b90-81e9-aca90b130633" />
 </div>
 
 
