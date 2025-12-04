@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import watchRouter from "./routes/watch.route.js"
 import cookieParser from "cookie-parser";
+import { shutdown } from "./service/shutdown.js";
 
 
 dotenv.config();
@@ -11,11 +12,6 @@ const port = process.env.PORT || 8082;
 const app = express();
 
 const FRONTEND_ORIGIN = "http://localhost:3000";
-
-app.use((req, res, next) => {
-   console.log("Incoming Origin:", req.headers.origin, "Method:", req.method, "Path:", req.path);
-   next();
-});
 
 app.use(cookieParser());
 
@@ -35,6 +31,9 @@ app.get('/', (req, res) => {
    res.send('HHLD YouTube Watch Service')
 })
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
    console.log(`Server is listening at http://localhost:${port}`);
 })
+
+
+shutdown(server);
