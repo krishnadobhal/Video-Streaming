@@ -1,12 +1,10 @@
 import AWS from "aws-sdk"
 import * as dotenv from "dotenv"
 dotenv.config()
-import { PrismaClient } from '@prisma/client'
-import axios from "axios"
 import path from "path";
 import { generateStreamToken } from "../middleware/utils.js"
+import { getVideoMasterUrl } from "../service/watchService.js";
 
-const prisma = new PrismaClient()
 
 const s3 = new AWS.S3({
     endpoint: process.env.EndPoint,
@@ -40,18 +38,12 @@ async function generateSignedUrl(videoKey) {
 
 const watchVideo = async (req, res) => {
     try {
-
-        const videoKey = req.params.id;
-        console.log(videoKey);
-        const key = await prisma.video_data.findUnique({
-            where: {
-                id: videoKey
-            }
-        })
-        const signedUrl = await generateSignedUrl(key.master);
-        console.log(videoKey)
+        const id = req.params.id;
+        console.log(id);
+        const MasterUrl = await getVideoMasterUrl(id);
+        const signedUrl = await generateSignedUrl(MasterUrl);
+        console.log(id)
         console.log(signedUrl)
-        const url = await axios.get(signedUrl)
         res.json({ url: signedUrl });
     } catch (err) {
         console.error('Error generating pre-signed URL:', err);
@@ -64,16 +56,13 @@ export const streamMaster = async (req, res) => {
         const { id } = req.params;
         console.log(id);
 
-        const video = await prisma.video_data.findUnique({
-            where: { id: id },
-        });
-        console.log(video);
-        if (!video || !video.master) {
+        const MasterUrl = await getVideoMasterUrl(id);
+        console.log(MasterUrl);
+        if (!MasterUrl) {
             return res.status(404).send("Video not found");
         }
 
-        const key = video.master;
-
+        const key = MasterUrl;
         const s3Stream = s3
             .getObject({
                 Bucket: BUCKET,
@@ -104,17 +93,14 @@ export const streamAsset = async (req, res) => {
         const { id, fileName } = req.params;
         //id -> cmihpvklw0001wedfrqkcobnr
         //fileName -> OneBox_854x480_000.ts
-        const video = await prisma.video_data.findUnique({
-            where: { id },
-        });
-
-        if (!video || !video.master) {
+        const MasterUrl = await getVideoMasterUrl(id);
+        if (!MasterUrl) {
             return res.status(404).send("Video not found");
         }
 
         //example-> video.master = "hls/output/john/video1/video1_master.m3u8"
 
-        const masterDir = path.posix.dirname(video.master);
+        const masterDir = path.posix.dirname(MasterUrl);
         // after this it will be -> "hls/output/john/video1"
 
         //then we will be fetching the file hls/output/john/video1/OneBox_854x480_000.ts from s3
@@ -163,11 +149,9 @@ export const getStreamToken = async (req, res) => {
         const { id } = req.params;
 
         // Verify the video exists
-        const video = await prisma.video_data.findUnique({
-            where: { id },
-        });
+        const MasterUrl = await getVideoMasterUrl(id);
 
-        if (!video) {
+        if (!MasterUrl) {
             return res.status(404).json({ error: "Video not found" });
         }
 
