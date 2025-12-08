@@ -1,14 +1,13 @@
-import client from "./redis-client.js";
+import { redisClient } from "./client.js";
 
-client.on('error', (err) => console.log('Redis Client Error', err));
+redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
-await client.connect();
 export async function setAndExpireKey(key, value, TTL) {
-    await client.setEx(key, TTL, value);
+    await redisClient.setEx(key, TTL, value);
 }
 
 export async function getKey(key) {
-    const value = await client.get(key);
+    const value = await redisClient.get(key);
     return value;
 }
 

@@ -2,19 +2,14 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import Image from "next/image";
 import Click from "./click";
+import SearchBar from './searchBar';
 
 export default async function AllVideo() {
     const datas = await prisma.video_data.findMany({})
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Hero Section */}
-            <div className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-20 px-4">
-                <div className="container mx-auto">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4">Welcome to YouTube</h1>
-                    <p className="text-xl opacity-90">Discover amazing videos from creators worldwide</p>
-                </div>
-            </div>
+            <SearchBar />
 
             {/* Main Content */}
             <div className="container mx-auto px-4 md:px-8 py-8">

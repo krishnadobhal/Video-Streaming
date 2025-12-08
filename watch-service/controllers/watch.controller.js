@@ -51,7 +51,7 @@ const watchVideo = async (req, res) => {
     }
 }
 
-export const streamMaster = async (req, res) => {
+const streamMaster = async (req, res) => {
     try {
         const { id } = req.params;
         console.log(id);
@@ -87,7 +87,7 @@ export const streamMaster = async (req, res) => {
     }
 };
 
-export const streamAsset = async (req, res) => {
+const streamAsset = async (req, res) => {
     try {
         // this was url example -> http://localhost:8082/watch/stream/cmihpvklw0001wedfrqkcobnr/OneBox_854x480_000.ts
         const { id, fileName } = req.params;
@@ -144,7 +144,7 @@ export const streamAsset = async (req, res) => {
  * This endpoint should be called by authenticated users to get a token
  * that can be used to access streaming endpoints.
  */
-export const getStreamToken = async (req, res) => {
+const getStreamToken = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -168,4 +168,4 @@ export const getStreamToken = async (req, res) => {
     }
 };
 
-export default watchVideo;
+export { watchVideo, streamAsset, streamMaster, getStreamToken };

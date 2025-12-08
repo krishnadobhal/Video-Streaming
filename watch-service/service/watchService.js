@@ -1,11 +1,10 @@
 import { PrismaClient } from '@prisma/client'
 import { day, getKey, setAndExpireKey } from './redis.js';
-import client from './redis-client.js';
+import { redisClient } from './client.js';
 
 
 const prisma = new PrismaClient()
-client.on('error', (err) => console.log('Redis Client Error', err));
-
+redisClient.on('error', (err) => console.log('Redis Client Error', err));
 
 export async function getVideoMasterUrl(id) {
     let MasterUrl = await getKey(id);
