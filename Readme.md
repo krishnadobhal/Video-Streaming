@@ -5,9 +5,60 @@ A scalable microservices-based video streaming platform designed for efficient v
 - [Getting Started](#getting-started)
 
 ## System Design
-<div align="center">
-    <img width="900" height="1202" alt="Video" src="https://github.com/user-attachments/assets/fe0e0e76-9eab-4b90-81e9-aca90b130633" />
-</div>
+```mermaid
+flowchart TD
+    %% Nodes
+    Client([User / Client App])
+    APIG[API Gateway]
+    
+    subgraph Services
+        UploadSvc[Upload Service]
+        TranscodeSvc[Transcode Service]
+        WatchSvc[Watch Service]
+    end
+
+    subgraph Storage
+        S3Raw[(S3 Bucket: Raw Video)]
+        S3Proc[(S3 Bucket: HLS/MP4)]
+        DB[(PostgreSQL / Metadata)]
+    end
+
+    subgraph Messaging
+        Kafka{{Kafka Queue}}
+    end
+
+    CDN(CDN / CloudFront)
+
+    %% Connections
+    Client -- "1. Upload Request" --> APIG
+    APIG --> UploadSvc
+    
+    UploadSvc -- "2. Get Presigned URL" --> Client
+    Client -- "3. Upload File" --> S3Raw
+    
+    UploadSvc -- "4. Publish Event" --> Kafka
+    Kafka -- "5. Consume Event" --> TranscodeSvc
+    
+    TranscodeSvc -- "6. Fetch Video" --> S3Raw
+    %% TranscodeSvc -- "7. Transcode (FFmpeg)" --> TranscodeSvc
+    TranscodeSvc -- "7. Save HLS Segments" --> S3Proc
+    
+    TranscodeSvc -- "8. Update Status" --> DB
+    
+    Client -- "9. Request Video" --> WatchSvc
+    WatchSvc -- "10. Get URL" --> DB
+    Client -- "11. Stream Content" --> CDN
+    CDN -.-> S3Proc
+
+    %% Styling
+    classDef storage fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef queue fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef service fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px;
+    
+    class S3Raw,S3Proc,DB storage;
+    class Kafka queue;
+    class UploadSvc,TranscodeSvc,WatchSvc service;
+```
 
 
 ## Key Feature
