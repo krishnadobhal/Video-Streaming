@@ -15,7 +15,7 @@ flowchart TD
         UploadSvc[Upload Service]
         TranscodeSvc[Transcode Service]
         WatchSvc[Watch Service]
-        WhisperSvc[Whisper Service]
+        WhisperSvc[Audio Tanscription Service]
     end
 
     subgraph Storage
@@ -31,7 +31,8 @@ flowchart TD
     CDN(CDN / CloudFront)
 
     %% Connections
-    Client -- "1. Upload Request" --> APIG
+    Client -- "1a.  Upload Request" --> APIG
+    UploadSvc-- "1b. Save Video Meta Data" -->DB
     APIG --> UploadSvc
     
     UploadSvc -- "2. Get Presigned URL" --> Client
@@ -43,19 +44,19 @@ flowchart TD
     Kafka -- "5a. Consume Event" --> TranscodeSvc
     TranscodeSvc -- "6a. Fetch Video" --> S3Raw
     TranscodeSvc -- "7a. Save HLS Segments" --> S3Proc
-    TranscodeSvc -- "8a. Update Status" --> DB
+    TranscodeSvc -- "8a. Save HLS URL" --> DB
 
     %% Whisper Flow
     Kafka -- "5b. Consume Event" --> WhisperSvc
     WhisperSvc -- "6b. Fetch Video" --> S3Raw
     WhisperSvc -- "7b. Save Subtitles" --> S3Proc
-    WhisperSvc -- "8b. Update Metadata" --> DB
+    WhisperSvc -- "8b. Update Subtitles" --> DB
     
     %% Playback Flow
     Client -- "9. Request Video" --> WatchSvc
     WatchSvc -- "10. Get URL" --> DB
     Client -- "11. Stream Content" --> CDN
-    CDN -.-> S3Proc
+    CDN --"12. Video Segments"--> S3Proc
 
     %% Styling
     classDef storage fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
