@@ -15,16 +15,17 @@ flowchart TD
         UploadSvc[Upload Service]
         TranscodeSvc[Transcode Service]
         WatchSvc[Watch Service]
+        WhisperSvc[Whisper Service]
     end
 
     subgraph Storage
         S3Raw[(S3 Bucket: Raw Video)]
-        S3Proc[(S3 Bucket: HLS/MP4)]
+        S3Proc[(S3 Bucket: HLS/MP4/Subs)]
         DB[(PostgreSQL / Metadata)]
     end
 
     subgraph Messaging
-        Kafka{{Kafka Queue}}
+        Kafka{{Kafka}}
     end
 
     CDN(CDN / CloudFront)
@@ -37,14 +38,20 @@ flowchart TD
     Client -- "3. Upload File" --> S3Raw
     
     UploadSvc -- "4. Publish Event" --> Kafka
-    Kafka -- "5. Consume Event" --> TranscodeSvc
     
-    TranscodeSvc -- "6. Fetch Video" --> S3Raw
-    %% TranscodeSvc -- "7. Transcode (FFmpeg)" --> TranscodeSvc
-    TranscodeSvc -- "7. Save HLS Segments" --> S3Proc
+    %% Transcoding Flow
+    Kafka -- "5a. Consume Event" --> TranscodeSvc
+    TranscodeSvc -- "6a. Fetch Video" --> S3Raw
+    TranscodeSvc -- "7a. Save HLS Segments" --> S3Proc
+    TranscodeSvc -- "8a. Update Status" --> DB
+
+    %% Whisper Flow
+    Kafka -- "5b. Consume Event" --> WhisperSvc
+    WhisperSvc -- "6b. Fetch Video" --> S3Raw
+    WhisperSvc -- "7b. Save Subtitles" --> S3Proc
+    WhisperSvc -- "8b. Update Metadata" --> DB
     
-    TranscodeSvc -- "8. Update Status" --> DB
-    
+    %% Playback Flow
     Client -- "9. Request Video" --> WatchSvc
     WatchSvc -- "10. Get URL" --> DB
     Client -- "11. Stream Content" --> CDN
@@ -57,7 +64,7 @@ flowchart TD
     
     class S3Raw,S3Proc,DB storage;
     class Kafka queue;
-    class UploadSvc,TranscodeSvc,WatchSvc service;
+    class UploadSvc,TranscodeSvc,WatchSvc,WhisperSvc service;
 ```
 
 
