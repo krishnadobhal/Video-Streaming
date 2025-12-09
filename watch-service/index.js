@@ -5,7 +5,7 @@ import watchRouter from "./routes/watch.route.js"
 import cookieParser from "cookie-parser";
 import { shutdown } from "./service/shutdown.js";
 import { connectClients } from "./service/client.js";
-import { SetupElasticsearch } from "./service/elasticSearch.js";
+import { AddDataFromDatabase, deleteIndex, SetupElasticsearch } from "./service/elasticSearch.js";
 
 
 dotenv.config();
@@ -42,3 +42,4 @@ const server = app.listen(port, () => {
 shutdown(server);
 SetupElasticsearch();
 connectClients();
+// AddDataFromDatabase();

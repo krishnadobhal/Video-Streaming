@@ -17,7 +17,7 @@ const getAllVideos = async (req, res) => {
 
 const getSearchVideos = async (req, res) => {
   try {
-    const query = req.query.q;
+    const query = req.query.query;
     const videos = await searchVideos(query);
     return res.status(200).send(videos);
   }
@@ -29,8 +29,9 @@ const getSearchVideos = async (req, res) => {
 
 const getPartialSearchVideos = async (req, res) => {
   try {
-    const query = req.query.q;
+    const query = req.query.query;
     const videos = await partialSearch(query);
+    console.log('Partial search results:', query, videos);
     return res.status(200).send(videos);
   }
   catch (error) {

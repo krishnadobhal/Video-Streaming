@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/home', getAllVideos);
 router.get('/stream/:id', watchVideo);
 router.get('/search', getSearchVideos)
-router.get('/partial-search', getPartialSearchVideos);
+router.get('/suggest', getPartialSearchVideos);
 
 // Get a streaming token (should be called by authenticated users)
 router.get('/stream/:id/token', VerifyUserToken, getStreamToken);

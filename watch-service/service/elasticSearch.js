@@ -1,36 +1,63 @@
 import { esClient } from "./client.js";
+import { PrismaClient } from "@prisma/client"
 
-export const esIndex = "video_metadata";
+export const esIndex = "video_metadata_v2";
+const prisma = new PrismaClient();
 
 export async function SetupElasticsearch() {
     try {
-        const existsResp = await esClient.indices.exists({ index: esIndex });
-        const exists = typeof existsResp === "boolean" ? existsResp : (existsResp).body;
+        const exists = await esClient.indices.exists({ index: esIndex });
 
-        if (!exists) {
+        if (exists) {
+            console.log(`Elasticsearch index ${esIndex} already exists.`);
+            return;
+        }
+        else {
             console.log(`Creating Elasticsearch index: ${esIndex}`);
             await esClient.indices.create({
                 index: esIndex,
                 body: {
                     mappings: {
                         properties: {
+                            id: { type: "keyword" },
                             date: { type: "date" },
                             title: { type: "text" },
                             description: { type: "text" },
                             author: { type: "text" },
-                        },
-                    },
-                },
+                            title_suggest: {
+                                type: "completion"
+                            }
+                        }
+                    }
+                }
             });
-            console.log(`Index ${esIndex} created.`);
-        } else {
-            console.log(` Elasticsearch index ${esIndex} already exists.`);
         }
+
+        console.log(`Index ${esIndex} created with autocomplete support ✅`);
     } catch (err) {
         console.error("Elasticsearch setup error:", err);
         throw err;
     }
+}
 
+
+export async function AddDataFromDatabase() {
+    const data = await prisma.video_data.findMany();
+    for (const video of data) {
+        await indexVideo(video);
+    }
+}
+
+export async function deleteIndex() {
+    try {
+        const exists = await esClient.indices.exists({ index: esIndex });
+        if (exists) {
+            await esClient.indices.delete({ index: esIndex });
+            console.log(`Index ${esIndex} deleted.`);
+        }
+    } catch (err) {
+        console.error("Error deleting index:", err);
+    }
 }
 
 export async function indexVideo(video) {
@@ -39,10 +66,12 @@ export async function indexVideo(video) {
             index: esIndex,
             id: video.id,
             body: {
+                id: video.id,
                 date: video.date,
                 title: video.title,
                 description: video.description,
                 author: video.author,
+                title_suggest: video.title
             },
         });
     } catch (err) {
@@ -54,12 +83,14 @@ export async function searchVideos(query) {
     try {
         const result = await esClient.search({
             index: esIndex,
-            //all data
             body: {
                 query: {
                     multi_match: {
                         query: query,
-                        fields: ["title", "description", "author"],
+                        fields: ["title^3", "description^2", "author"],
+                        type: "best_fields",
+                        fuzziness: "AUTO",
+                        operator: "or"
                     },
                 },
             },
@@ -72,23 +103,51 @@ export async function searchVideos(query) {
     }
 }
 
+export async function allData() {
+    const result = await esClient.search({
+        index: esIndex,
+        body: {
+            query: {
+                match_all: {}
+            }
+        }
+    });
+
+    const s = result.hits.hits.map(hit => hit._source);
+    console.log("All data in Elasticsearch:", s);
+}
+
 export async function partialSearch(query) {
     try {
+        if (!query || query.trim() === "") {
+            return [];
+        }
+
         const result = await esClient.search({
             index: esIndex,
             body: {
-                query: {
-                    multi_match: {
-                        query: query,
-                        fields: ["title", "description", "author"],
-                        match_phrase_prefix: true
+                suggest: {
+                    title_suggest: {
+                        prefix: query,
+                        completion: {
+                            field: "title_suggest",
+                            size: 5
+                        }
                     }
-                },
-            },
+                }
+            }
         });
-        return result.body.hits.hits.map(hit => hit._source);
+        console.log("Partial search result:", result);
+        const suggestions =
+            result.suggest.title_suggest[0].options.map(
+                opt => opt._source.title
+            );
+
+        console.log("Elasticsearch suggestions:", suggestions);
+        return suggestions;
+
     } catch (err) {
         console.error("Error in partial search:", err);
         return [];
     }
-}
+}   

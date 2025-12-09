@@ -1,9 +1,12 @@
 "use client";
+import SearchBar from "@/components/home/searchBar";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 
 export default function ResultsPage() {
+    const router = useRouter();
     const params = new URLSearchParams(window.location.search);
     const searchQuery = params.get("search_query") || "";
     const [videos, setVideos] = useState([]);
@@ -21,15 +24,16 @@ export default function ResultsPage() {
     }, [searchQuery]);
     console.log(videos);
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 p-4">
+            <SearchBar />
             {videos.length === 0 ? (
                 <div className="flex items-center justify-center h-screen">
                     <p className="text-gray-500 text-lg">No results found for "{searchQuery}"</p>
                 </div>
             ) : (
-                <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {videos.map((video: any) => (
-                        <div key={video.id} className="bg-white rounded-lg shadow-lg overflow-hidden m-4">
+                        <div onClick={() => { router.push(`/watch?v=${video.id}`) }} key={video.id} className="bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow">
                             <div className="aspect-video relative overflow-hidden">
                                 <img
                                     src={video.thumbnail || ""}
@@ -38,7 +42,7 @@ export default function ResultsPage() {
                                 />
                             </div>
                             <div className="p-4 space-y-2">
-                                <h2 className="text-xl font-bold text-gray-800 line-c   lamp-2">{video.title}</h2>
+                                <h2 className="text-base font-bold text-gray-800 line-clamp-2">{video.title}</h2>
                             </div>
                         </div>
                     ))}
