@@ -68,7 +68,16 @@ const s3ToS3 = async (paramkey) => {
       },
     ];
 
-    const baseFileName = mp4FileName.replace(".", "_");
+    const baseFileName = mp4FileName
+      .replace(/\.[^/.]+$/, "") // Remove file extension
+      .replace(/\s+/g, "_")     // Replace spaces with underscores
+      .replace(/[^\w\-]/g, "_"); // Replace special chars with underscores
+
+    // Ensure output directory exists
+    if (!fs.existsSync(hlsFolder)) {
+      fs.mkdirSync(hlsFolder, { recursive: true });
+      console.log(`Created output directory: ${hlsFolder}`);
+    }
 
     console.log("Starting parallel HLS conversion for all resolutions");
     const transcodePromises = resolutions.map(
@@ -80,16 +89,16 @@ const s3ToS3 = async (paramkey) => {
         await new Promise((resolve, reject) => {
           ffmpeg("./local.mp4")
             .outputOptions([
-              `-c:v h264`,
-              `-b:v ${videoBitrate}`,
-              `-c:a aac`,
-              `-b:a ${audioBitrate}`,
-              `-vf scale=${resolution}`,
-              `-f hls`,
-              `-hls_time 10`,
-              `-hls_list_size 0`,
-              `-hls_base_url ${PLAYBACK_BASE_URL}/${id}/`,
-              `-hls_segment_filename hls/output/${segmentFileName}`,
+              `-c:v`, `h264`,
+              `-b:v`, videoBitrate,
+              `-c:a`, `aac`,
+              `-b:a`, audioBitrate,
+              `-vf`, `scale=${resolution}`,
+              `-f`, `hls`,
+              `-hls_time`, `10`,
+              `-hls_list_size`, `0`,
+              `-hls_base_url`, `${PLAYBACK_BASE_URL}/${id}/`,
+              `-hls_segment_filename`, `hls/output/${segmentFileName}`,
             ])
             .output(`hls/output/${outputFileName}`)
             .on("end", () => resolve())

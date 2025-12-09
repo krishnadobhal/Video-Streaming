@@ -1,5 +1,4 @@
 "use client";
-import SearchBar from "@/components/home/searchBar";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -25,7 +24,6 @@ export default function ResultsPage() {
     console.log(videos);
     return (
         <div className="min-h-screen bg-gray-50 p-4">
-            <SearchBar />
             {videos.length === 0 ? (
                 <div className="flex items-center justify-center h-screen">
                     <p className="text-gray-500 text-lg">No results found for "{searchQuery}"</p>

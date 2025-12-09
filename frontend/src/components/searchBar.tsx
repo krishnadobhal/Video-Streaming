@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Input } from "../ui/input";
+import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import axios, { CancelTokenSource } from "axios";
+import { set } from "video.js/dist/types/tech/middleware";
 
 const SearchBar = () => {
     const router = useRouter();
@@ -49,6 +50,8 @@ const SearchBar = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!searchTerm.trim()) return;
+        setSuggestions([]);
+        setSearchTerm("");
         router.push(`/results?search_query=${searchTerm}`);
     };
 

@@ -2,14 +2,13 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 import Image from "next/image";
 import Click from "./click";
-import SearchBar from './searchBar';
+import SearchBar from '../searchBar';
 
 export default async function AllVideo() {
     const datas = await prisma.video_data.findMany({})
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <SearchBar />
 
             {/* Main Content */}
             <div className="container mx-auto px-4 md:px-8 py-8">
