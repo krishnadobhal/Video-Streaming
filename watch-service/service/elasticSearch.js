@@ -1,7 +1,9 @@
 import { esClient } from "./client.js";
 import { PrismaClient } from "@prisma/client"
+import dotenv from "dotenv";
+dotenv.config();
 
-export const esIndex = "video_metadata_v2";
+export const esIndex = process.env.VIDEO_INDEX_NAME || "video_metadata_v2";
 const prisma = new PrismaClient();
 
 export async function SetupElasticsearch() {
@@ -81,6 +83,7 @@ export async function indexVideo(video) {
 
 export async function searchVideos(query) {
     try {
+        console.log("Searching for videos with query:", query);
         const result = await esClient.search({
             index: esIndex,
             body: {
@@ -93,10 +96,28 @@ export async function searchVideos(query) {
                         operator: "or"
                     },
                 },
+                suggest: {
+                    title_suggest: {
+                        prefix: query,
+                        completion: {
+                            field: "title_suggest",
+                            size: 5
+                        }
+                    }
+                }
             },
         });
         console.log("Search result:", result);
-        return result.hits.hits.map(hit => hit._source);
+
+        const results = result.hits.hits.map(hit => hit._source);
+        if (results.length === 0) {
+            const suggestions =
+                result.suggest.title_suggest[0].options.map(
+                    opt => opt._source
+                );
+            return suggestions
+        }
+        return results;
     } catch (err) {
         console.error("Error searching videos:", err);
         return [];
