@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import * as jose from "jose";
 import { getAuthJsDerivedKey } from "./utils.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 const JWT_SECRET = process.env.AUTH_SECRET;
 

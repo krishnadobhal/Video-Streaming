@@ -1,13 +1,14 @@
 import { spawn } from "child_process";
 import ffmpeg from "fluent-ffmpeg";
 import path from "path";
-import fs from "fs";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 
-ffmpeg.setFfmpegPath("C:\\ProgramData\\chocolatey\\lib\\ffmpeg\\tools\\ffmpeg\\bin\\ffmpeg.exe");
+ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH || "");
 const WHISPER_CLI =
-    process.env.WHISPER_CLI_PATH ||
-    "C:\\Users\\krish\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\whisper.exe";
+    process.env.WHISPER_CLI_PATH || "";
 
 export function convertMp4ToMp3(inputPath: string, outputPath: string): Promise<void> {
 
@@ -42,7 +43,7 @@ export async function transcribeWithWhisperCLI(audioPath: string): Promise<strin
             "--output_dir", outputDir
         ];
 
-        const proc = spawn(process.env.WHISPER_CLI || "whisper", args, {
+        const proc = spawn(WHISPER_CLI || "whisper", args, {
             stdio: "inherit"
         });
         //Handle errors from the spawning process

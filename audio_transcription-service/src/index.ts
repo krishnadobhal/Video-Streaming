@@ -25,7 +25,7 @@ const activeJobs = new Map<string, JobInfo>();
 async function startConsumer() {
     // Ensure consumer is connected and subscribed before running
     await kafkaConfig.consumer.connect();
-    await kafkaConfig.consumer.subscribe({ topic: "youtube", fromBeginning: false });
+    await kafkaConfig.consumer.subscribe({ topic: "audio", fromBeginning: false });
 
     await kafkaConfig.consumer.run({
         autoCommit: false, // Disable auto commit

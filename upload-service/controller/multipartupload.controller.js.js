@@ -4,6 +4,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import * as dotenv from "dotenv"
 import { addVideoDetailsToDB } from "../db/db.js"
+import { indexVideo } from "../service/elasticSearch.js";
 dotenv.config()
 
 export const initializeUpload = async (req, res) => {
@@ -109,10 +110,12 @@ export const completeUpload = async (req, res) => {
 
         const url = uploadResult.Location;
         const videodetails = await addVideoDetailsToDB(title, description, author, url);
+        const date = new Date();
+        await indexVideo({ id, title, description, author, date });
         console.log(videodetails.id);
 
         pushVideoForEncodingToKafka("youtube", title, author, videodetails.id, uploadResult.Location);
-        pushVideoForEncodingToKafka("audio", title, author, videodetails.id, uploadResult.Location);
+        // pushVideoForEncodingToKafka("audio", title, author, videodetails.id, uploadResult.Location);
         return res.status(200).json({ message: "Uploaded successfully!!!" });
     } catch (error) {
         console.log("Error completing upload :", error);
