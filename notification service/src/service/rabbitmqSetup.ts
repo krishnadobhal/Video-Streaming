@@ -1,4 +1,4 @@
-import { rabbitMQ } from "../client/rabbitmq.ts";
+import { rabbitMQ } from "@/client/rabbitmq.ts";
 
 export async function setupQueues() {
     const channel = rabbitMQ.getChannel();

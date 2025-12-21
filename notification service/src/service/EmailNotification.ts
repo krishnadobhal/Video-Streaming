@@ -9,10 +9,10 @@ export async function EmailNotificationWithRetry(message: NotificationMessage) {
         await EmailNotification(); // Call the actual email sending function
         return { success: true, attempts };
     } catch (error) {
-        return { success: false, attempts };
+        throw new Error("Email sending failed");
     }
 }
 
 export async function EmailNotification() {
-    console.log("Email notification sent successfully.");
+    throw new Error("Simulated email sending failure");
 }
