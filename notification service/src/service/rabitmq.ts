@@ -1,10 +1,9 @@
 import { EmailNotificationWithRetry } from './EmailNotification.ts';
 import { NotificationMessage } from "@/types/index.ts";
 import { rabbitMQ } from '@/client/rabbitmq.ts';
-import CircuitBreaker from '@/service/circuitBreaker.ts';
+import { circuitBreakerTest } from './CB.ts';
 
 
-const breaker = new CircuitBreaker();
 
 export async function sendMessage(queueMessage: NotificationMessage, queue: string) {
     const channel = rabbitMQ.getChannel();
@@ -16,79 +15,83 @@ export async function sendMessage(queueMessage: NotificationMessage, queue: stri
 
 export async function startEmailConsumer() {
     const channel = rabbitMQ.getChannel();
-    const queue = 'Email-Queue';
-    channel.prefetch(1);
+    const queue = "Email-Queue";
 
-    console.log(`Waiting for messages in ${queue}...`);
+    await channel.prefetch(1);
+    console.log("Waiting for messages...");
 
-    channel.consume(queue, async (msg) => {
-        if (!msg) {
-            console.error("Consumer cancelled by server");
+    const res = await channel.consume(queue, async (msg) => {
+        if (!msg) return;
+
+        if (!circuitBreakerTest.canConsume()) {
+            console.warn("Message received while Paused. Nacking without requeue locally (relying on Consumer Stop).");
+            channel.nack(msg, false, true);
             return;
         }
+
+        const payload = JSON.parse(msg.content.toString()) as NotificationMessage;
+
+        // Calculate attempts based on payload
+        const currentRetryCount = payload.retryCount;
+        const attempts = currentRetryCount + 1;
+
         try {
-            // If circuit breaker is OPEN, reject processing
-            if (!breaker.canExecute()) {
-                throw new Error("Circuit breaker OPEN");
-            }
-            console.log(`Received: ${msg.content.toString()}`);
-            const msgContent = JSON.parse(msg.content.toString()) as NotificationMessage;
+            const result = await EmailNotificationWithRetry({
+                ...payload,
+                retryCount: currentRetryCount
+            });
 
-            const result = await EmailNotificationWithRetry(msgContent);
-            console.log('email notification result:', result);
-            const { success, attempts } = result;
-
-            // If success, ACK the message
-            if (success) {
+            if (result.success) {
                 channel.ack(msg);
-                breaker.recordSuccess();
-                console.log("Email sent successfully, message acknowledged.");
+                circuitBreakerTest.recordSuccess();
                 return;
             }
-            const nextRetry = attempts + 1;
-            // If attempts exceed max retries, send to DLQ
-            if (nextRetry > 3) {
+
+
+            // if we reached Max Retries (Dead Letter Strategy)
+            if (result.attempts > circuitBreakerTest.MAX_RETRIES) {
+                console.error(`Max retries reached for msg. Sending to DLQ.`);
                 channel.sendToQueue(
                     "Email-DLQ",
-                    Buffer.from(JSON.stringify({
-                        ...msgContent,
-                        failedAttempts: attempts,
-                        lastError: new Date().toISOString()
-                    })),
+                    Buffer.from(JSON.stringify(payload)),
                     { persistent: true }
                 );
                 channel.ack(msg);
-                breaker.recordFailure();
                 return;
             }
 
+            // 2. System Backoff (Circuit Breaker Strategy)
+            console.warn(`Failure detected. Triggering Circuit Breaker...`);
+
+
+            // Send back to queue
+            channel.sendToQueue(
+                queue,
+                Buffer.from(JSON.stringify(payload)),
+                { persistent: true }
+            );
+
             channel.ack(msg);
 
-            if (breaker.getState() === "HALF_OPEN") {
-                try {
-                    channel.sendToQueue(
-                        queue,
-                        Buffer.from(
-                            JSON.stringify({
-                                ...msgContent,
-                                retryCount: nextRetry
-                            })
-                        ),
-                        { persistent: true }
-                    );
-                    breaker.recordSuccess();
-                }
-                catch (error) {
-                    breaker.recordFailure();
-                    console.error("Error re-queuing message in HALF_OPEN state:", error);
-                }
-            }
+            // Trigger the pause
+            circuitBreakerTest.recordFailure(
+                () => rabbitMQ.stopConsumer(),
+                () => startEmailConsumer()
+            );
+
+        } catch (err) {
+            console.error("Unexpected Consumer Error", err);
+            // Catch-all: Update count, republish, ack, pause.
+            payload.retryCount = attempts;
+            channel.sendToQueue(queue, Buffer.from(JSON.stringify(payload)), { persistent: true });
+            channel.ack(msg);
+
+            circuitBreakerTest.recordFailure(
+                () => rabbitMQ.stopConsumer(),
+                () => startEmailConsumer()
+            );
         }
-        catch (error) {
-            breaker.recordFailure();
-            console.error("Error processing message:", error);
-            channel.nack(msg, false, true); // requeue the message
-            return;
-        }
-    }, { noAck: false });
+    });
+
+    rabbitMQ.consumerTag = res.consumerTag;
 }
