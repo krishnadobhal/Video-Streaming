@@ -4,6 +4,7 @@ class RabbitMQ {
     private static instance: RabbitMQ;
     private connection!: amqp.ChannelModel;
     private channel!: Channel;
+    public consumerTag?: string; // to store consumer tag
 
     private constructor() { }
 
@@ -29,6 +30,16 @@ class RabbitMQ {
         }
         return this.channel;
     }
+
+    async stopConsumer() {
+        if (!this.consumerTag) return;
+
+        await this.channel.cancel(this.consumerTag);
+        this.consumerTag = undefined;
+
+        console.log("Consumer stopped");
+    }
+
     close() {
         return this.connection.close();
     }
